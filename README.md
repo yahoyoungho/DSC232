@@ -33,4 +33,5 @@ df = (
 
 ### Spark UI Evidence
 <insert screenshot showing multiple executors> <img width="408" height="291" alt="setup" src="https://github.com/user-attachments/assets/543e353b-ece7-4fa1-a2f4-85affa25cddc" />
+This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
