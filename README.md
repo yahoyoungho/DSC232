@@ -13,7 +13,6 @@ Link to dataset: https://github.com/smousavi05/STEAD
 - Executor Memory = (128 − 2) / 7 = 18 GB
 
 ### Spark Configuration
-<insert SparkSession code>
 # for memory of 128gb 8 cores
 spark = (
     SparkSession.builder
