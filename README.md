@@ -255,14 +255,19 @@ Our target column is `trace_category`. The positive label will be `earthquake_lo
 ## Do you have missing and duplicate values in your dataset?
 In our dataset there are no duplicate value in `trace_name` as it is a unique identifier. To confirm we did a simple calculation on `trace_name` column. (Refer to cell 12)
 
-Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data.
-
-<img width="1558" height="1387" alt="image" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
-
+Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data (with the exception of `source_latitude` which we later decide to remove).
 
 #### for missing values and duplicates update the notebook and edit the readme
 
+## Data Plots (4 points)
 
+<img width="1558" height="1387" alt="image" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
+
+From this covariance matrix, we can see two possible instances of collinearity/redundant variables.\
+First is between `source_distance_deg` and `source_distance_km`, since they are essentially the same thing represented in two different metrics.\
+Second is between `receiver_latitude` and `source_latitude`. Upon further inspection and based on the data distribution graphs, receiver_latitude is not a useful predictor variable due to duplicate data values.\
+The duplicate data values makes sense since the location(s) that was receiving the earthquake signals was likely the same.
+Thus, we will drop `source_distance_deg` and `receiver_latitude` moving forward.
 ## Preprocessing Plan (3 points)
 
 - How will you handle missing values?
