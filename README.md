@@ -268,6 +268,14 @@ First is between `source_distance_deg` and `source_distance_km`, since they are 
 Second is between `receiver_latitude` and `source_latitude`. Upon further inspection and based on the data distribution graphs, `receiver_latitude` is not a useful predictor variable due to duplicate data values.\
 The duplicate data values makes sense since the location(s) that was receiving the earthquake signals was likely the same.
 Thus, we will drop `source_distance_deg` and `receiver_latitude` moving forward.
+
+
+Example Earthquake waveform plotting
+trace name: A16.CN_20150121053158_EV
+<img width="790" height="471" alt="image" src="https://github.com/user-attachments/assets/4e2a0850-d16b-4e0b-b6d1-fe904f7fb9b1" />
+
+
+
 ## Preprocessing Plan (3 points)
 
 - How will you handle missing values?
