@@ -255,5 +255,6 @@ Our target column is `trace_category`. The positive label will be `earthquake_lo
 ## Do you have missing and duplicate values in your dataset?
 In our dataset there are no duplicate value in `trace_name` as it is a unique identifier. To confirm we did a simple calculation on `trace_name` column. (Refer to cell 12)
 
+Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data.
 
 ## For image data: describe number of classes, image sizes, uniformity, cropping/normalization needs.
