@@ -44,7 +44,10 @@ Pre-missing data handling, we would effectively deal with 7609884000 (over 7 bil
 After dropping 5314 null earthquake ids, we are effectively working with 7578000000 rows of data.
 
 ## Describe all columns in your dataset: their scales and data distributions. Describe categorical and continuous variables. Describe your target column.
+Numerical data distribution
 <img width="2488" height="1989" alt="image" src="https://github.com/user-attachments/assets/1db3a568-7f5d-49e6-98ba-851c5b7d32ab" />
+
+Categorical top 10 frequent values
 <img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
 
 
