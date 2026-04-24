@@ -230,7 +230,8 @@ Scale of numerical variables from metadata file
  source_distance_deg              | 3.0                 
  source_distance_km               | 346.27              
  back_azimuth_deg                 | 360.0               
- coda_end_sample                  | 6000.0              ```
+ coda_end_sample                  | 6000.0              
+ ```
 
 
 Numerical data distribution
