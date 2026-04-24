@@ -37,7 +37,12 @@ df = (
 This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
 ## How many observations does your dataset have?
-The metadata contains total 1268314 observations
+The merge.csv metadata file contains total 1268314 observations.
+The merge.hdf5 file contains the waveforms of each earthquake observation.
+Each waveform is in an array in the shape of (6000, 3).
+Pre-missing data handling, this would mean we are effectively dealing with 7609884000 (over 7 billion) rows of data.
+After dropping 5314 null earthquake ids, we are effectively dealing with 7578000000 rows of data.
+
 ## Describe all columns in your dataset: their scales and data distributions. Describe categorical and continuous variables. Describe your target column.
 
 ## Do you have missing and duplicate values in your dataset?
