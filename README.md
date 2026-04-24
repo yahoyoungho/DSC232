@@ -265,7 +265,7 @@ Our dataset does not contain duplicate rows. In regards to duplicates values wit
 
 From this covariance matrix, we can see two possible instances of collinearity/redundant variables.\
 First is between `source_distance_deg` and `source_distance_km`, since they are essentially the same thing represented in two different metrics.\
-Second is between `receiver_latitude` and `source_latitude`. Upon further inspection and based on the data distribution graphs, receiver_latitude is not a useful predictor variable due to duplicate data values.\
+Second is between `receiver_latitude` and `source_latitude`. Upon further inspection and based on the data distribution graphs, `receiver_latitude` is not a useful predictor variable due to duplicate data values.\
 The duplicate data values makes sense since the location(s) that was receiving the earthquake signals was likely the same.
 Thus, we will drop `source_distance_deg` and `receiver_latitude` moving forward.
 ## Preprocessing Plan (3 points)
