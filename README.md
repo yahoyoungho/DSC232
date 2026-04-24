@@ -270,11 +270,13 @@ The duplicate data values makes sense since the location(s) that was receiving t
 Thus, we will drop `source_distance_deg` and `receiver_latitude` moving forward.
 
 
-Example Earthquake waveform plotting
+Example Earthquake waveform plot
 trace name: A16.CN_20150121053158_EV
 <img width="790" height="471" alt="image" src="https://github.com/user-attachments/assets/4e2a0850-d16b-4e0b-b6d1-fe904f7fb9b1" />
 
-
+Example noise waveform plot
+trace name: 109C.TA_201510210555_NO
+<img width="790" height="495" alt="image" src="https://github.com/user-attachments/assets/c9ea2eeb-8a88-493a-845b-0da3015f37df" />
 
 ## Preprocessing Plan (3 points)
 
