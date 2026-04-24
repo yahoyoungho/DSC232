@@ -257,6 +257,9 @@ In our dataset there are no duplicate value in `trace_name` as it is a unique id
 
 Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data.
 
+<img width="1558" height="1387" alt="image" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
+
+
 #### for missing values and duplicates update the notebook and edit the readme
 
 
