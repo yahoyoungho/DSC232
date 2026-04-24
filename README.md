@@ -241,6 +241,17 @@ Categorical top 10 frequent values
 <img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
 
 Our target column is `trace_category`. The positive label will be `earthquake_local` and the negative label will be `noise`. 5314 rows were missing and dropped.
+
+```
++----------------+-------+
+|  trace_category|  count|
++----------------+-------+
+|earthquake_local|1027574|
+|           noise| 235426|
+|            NULL|   5314|
++----------------+-------+
+```
+
 ## Do you have missing and duplicate values in your dataset?
 
 ## For image data: describe number of classes, image sizes, uniformity, cropping/normalization needs.
