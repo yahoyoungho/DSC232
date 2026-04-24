@@ -1,4 +1,6 @@
 # DSC232
+
+## GitHub Repository Setup (2 points)
 Link to dataset: https://github.com/smousavi05/STEAD
 ## SDSC Expanse Spark Environment
 
@@ -35,7 +37,7 @@ df = (
 This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
 ## How many observations does your dataset have?
-The data contains total 1268314 observations
+The metadata contains total 1268314 observations
 ## Describe all columns in your dataset: their scales and data distributions. Describe categorical and continuous variables. Describe your target column.
 
 ## Do you have missing and duplicate values in your dataset?
