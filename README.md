@@ -257,4 +257,28 @@ In our dataset there are no duplicate value in `trace_name` as it is a unique id
 
 Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data.
 
-## For image data: describe number of classes, image sizes, uniformity, cropping/normalization needs.
+#### for missing values and duplicates update the notebook and edit the readme
+
+
+## Preprocessing Plan (3 points)
+
+- How will you handle missing values?
+For samples in metadata that has missing values in either `trace_name` or `trace_category` will be dropped as they are part of unique identifiers. 
+
+For quantitative variables from the metadata, we will be imputing them in medians as a lot them are skewed.
+
+For qualitative variables from the metadata, we will be trying out different types of imputers to see the best performing imputer (ex: KNNImputer, Mode imputing, IterativeImputer, etc.)
+
+- How will you handle data imbalance (if applicable)?
+We will be using proportion of the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
+
+
+- What transformations will you apply (scaling, encoding, feature engineering)?
+We will apply the MinMaxScaler to hdf5 file containing waveform data. As the data is a frequency data we will be exploring differnt types of filters to filter out the noise.
+
+In terms of cateogorical variables we are going to apply one-hot-encoding so that we can feed in the numerical representation.
+
+We can feature engineering the displacement, velocity, accleration columns derived from the waveform data.
+
+- What Spark operations will you use for preprocessing?
+
