@@ -253,5 +253,5 @@ Our target column is `trace_category`. The positive label will be `earthquake_lo
 ```
 
 ## Do you have missing and duplicate values in your dataset?
-
+there are no duplicate in the target column (refer to cell #12)  ##todo update the cell number as necessary
 ## For image data: describe number of classes, image sizes, uniformity, cropping/normalization needs.
