@@ -37,15 +37,17 @@ df = (
 This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
 ## How many observations does your dataset have?
-The merge.csv metadata file contains total 1268314 observations.\
-The merge.hdf5 file contains the waveforms of each earthquake observation.\
-Each waveform is in an array in the shape of (6000, 3).\
-Pre-missing data handling, we would effectively deal with 7609884000 (over 7 billion) rows of data.\
-After dropping 5314 null earthquake ids, we are effectively working with 7578000000 rows of data.
+The merge.csv metadata file contains total 1,268,314 observations, each representing a unique earthquake event.\
+The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tuple containing three elements.\
+The first element of the tuple is the `trace_name` of the corresponding earthquake.\
+The second element is the earthquake's waveform. Each waveform is an array in the shape of (6000, 3).\
+The third element is a dictionary of three key-value pairs. The keys are `p_arrival_sample`, `s_arrival_sample`, and `coda_end_sample`. The values are strings containing numerical values.
+Pre-missing data handling, we would effectively deal with 7,609,884,000 (over 7 billion) rows of data (1,268,314 earthquakes * 6,000 waveform samples = 7,609,884,000).\
+After dropping 5,314 null earthquake ids, we are effectively working with 7,578,000,000 rows of data.
 
 ## Describe all columns in your dataset: their scales and data distributions. Describe categorical and continuous variables. Describe your target column.
 
-Scale of numerical variables from metadata file
+Scale of numerical variables from metadata file (merge.csv dataset)
 
 ```RECORD 0-----------------------------------------------
  summary                          | count               
@@ -240,7 +242,7 @@ Numerical data distribution
 Categorical top 10 frequent values
 <img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
 
-Our target column is `trace_category`. The positive label will be `earthquake_local` and the negative label will be `noise`. 5314 rows were missing and dropped.
+Our target column is `trace_category` from the merge.csv metadata file. The positive label will be "earthquake_local" and the negative label will be "noise". 5314 rows were missing and dropped.
 
 ```
 +----------------+-------+
