@@ -16,7 +16,7 @@ Link to dataset: https://github.com/smousavi05/STEAD
 
 ### Executor Calculation
 - Executor Instances = 8 − 1 = 7
-- Executor Memory = (128 − 4) // 7 = 1 GB
+- Executor Memory = (128 − 4) // 7 = 17 GB
 
 ### Spark Configuration
 # for memory of 128gb 8 cores
