@@ -37,7 +37,7 @@ df = (
 This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
 ## How many observations does your dataset have?
-We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)
+We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)\
 The merge.csv metadata file contains total 1,268,314 observations, each representing a unique earthquake event.\
 The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tuple containing three elements.\
 - The first element of the tuple is the `trace_name` of the corresponding earthquake.\
