@@ -18,6 +18,10 @@ Link to dataset: https://github.com/smousavi05/STEAD
 - Executor Instances = 8 − 1 = 7
 - Executor Memory = (128 − 4) // 7 = 17 GB
 
+### Executor Calculation for metadata file
+Since the file size is too small, we decided that calculating the executor/driver memory is unnecessary.
+- CSV file is around 400Mb
+
 ### Spark Configuration
 # for memory of 128gb 8 cores
 ```python
