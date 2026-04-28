@@ -270,8 +270,6 @@ From the distribution tables, we can see that most have at least some degree of 
 Categorical top 10 frequent values
 <img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
 
-Our target column is `trace_category` from the merge.csv metadata file. The positive label will be "earthquake_local" and the negative label will be "noise". 5314 rows were missing and dropped.
-
 
 Sample Waveform Statistics
 
@@ -295,8 +293,10 @@ Component 3 (Vertical):
   Min: -592841.187500
   Max: 651094.187500
 ```
+After reshaping back to (6000,3) to get directional vectors, we got these `waveform_data` statistics in the hdf5_2_parquet.ipynb. The `waveform_data` column is quantitative, and is in the shape of (1,18000).
+The mean centers around 0 as expected from looking at the waveform amplitude plot (refer to data plot section of readme.md).
 
-
+Our target column is `trace_category` from the merge.csv metadata file. The positive label will be "earthquake_local" and the negative label will be "noise". 5314 rows were missing and dropped.
 
 ```
 +----------------+-------+
