@@ -36,6 +36,9 @@ Initial setup was to have the driver memory to be 2GB, but due to large dataset 
 For the executor memory, we noticed that the execution for 6 executors with 20Gb configuration was faster than 7 executors with 17Gb.
 - Refering to `hdf5_2_parquet.ipynb`'s last cell
 
+<img width="725" height="360" alt="image" src="https://github.com/user-attachments/assets/9efb94fb-05d1-4c80-ad0c-37b8a89a770c" />
+- For the metadata EDA, we only allocated 1gb to Driver and 500mb to the single executor for the approximately 0.5GB metadata file.
+
 
 ## How many observations does your dataset have?
 We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)\
