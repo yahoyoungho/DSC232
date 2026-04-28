@@ -286,6 +286,8 @@ Example noise waveform plot
 trace name: 109C.TA_201510210555_NO
 <img width="790" height="495" alt="image" src="https://github.com/user-attachments/assets/c9ea2eeb-8a88-493a-845b-0da3015f37df" />
 
+Just looking at the raw waveform array data does not garner any apparent information, so these waveform plots help visually distinguish the difference in values between "noise" waveforms and "earthquake" waveforms.
+
 ## Preprocessing Plan (3 points)
 
 How will you handle missing values?
