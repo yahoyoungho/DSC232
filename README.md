@@ -16,18 +16,36 @@ Link to dataset: https://github.com/smousavi05/STEAD
 
 ### Executor Calculation
 - Executor Instances = 8 − 1 = 7
-- Executor Memory = (128 − 4) // 7 = 1 GB
+- Executor Memory = (128 − 4) // 7 = 17 GB
+
+### Executor Calculation for metadata file
+Since the file size is too small, we decided that calculating the executor/driver memory is unnecessary.
+- CSV file is around 400Mb
 
 ### Spark Configuration
 # for memory of 128gb 8 cores
+```python
+# for converted parquet file configuration
 spark = (
     SparkSession.builder
-    .appName("young-job")
     .config("spark.driver.memory", "4g")
     .config("spark.executor.instances", "6")
     .config("spark.executor.memory", "20g")
     .getOrCreate()
 )
+```
+
+```python
+# for metadata EDA configuration
+spark = (
+    SparkSession.builder
+    .config("spark.driver.memory", "1g")
+    .config("spark.executor.instances", "1")
+    .config("spark.executor.memory", "500m")
+    .getOrCreate()
+)
+```
+
 
 
 ### Spark UI Evidence
@@ -35,6 +53,9 @@ spark = (
 Initial setup was to have the driver memory to be 2GB, but due to large dataset we had to increase the driver memory to be 4GB.
 For the executor memory, we noticed that the execution for 6 executors with 20Gb configuration was faster than 7 executors with 17Gb.
 - Refering to `hdf5_2_parquet.ipynb`'s last cell
+
+<img width="725" height="360" alt="image" src="https://github.com/user-attachments/assets/9efb94fb-05d1-4c80-ad0c-37b8a89a770c" />
+- For the metadata EDA, we only allocated 1gb to Driver and 500mb to the single executor for the approximately 0.5GB metadata file.
 
 
 ## How many observations does your dataset have?
