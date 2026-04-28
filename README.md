@@ -7,6 +7,9 @@
 
 ## GitHub Repository Setup (2 points)
 Link to dataset: https://github.com/smousavi05/STEAD
+
+<i>We have a parquet file generated form the given csv and hdf5 file. The generated data will be in `ysuh2/data/stead_combined.parquet`</i>
+
 ## SDSC Expanse Spark Environment
 
 ### Resource Request
