@@ -12,11 +12,11 @@ Link to dataset: https://github.com/smousavi05/STEAD
 ### Resource Request
 - Total Cores: 8
 - Total Memory: 128 GB
-- Driver Memory: 2 GB
+- Driver Memory: 4 GB
 
 ### Executor Calculation
 - Executor Instances = 8 − 1 = 7
-- Executor Memory = (128 − 2) / 7 = 18 GB
+- Executor Memory = (128 − 4) // 7 = 1 GB
 
 ### Spark Configuration
 # for memory of 128gb 8 cores
