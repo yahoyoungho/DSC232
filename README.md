@@ -23,23 +23,17 @@ Link to dataset: https://github.com/smousavi05/STEAD
 spark = (
     SparkSession.builder
     .appName("young-job")
-    .config("spark.driver.memory", "2g")
-    .config("spark.executor.instances", "7")
-    .config("spark.executor.memory", "18g")
+    .config("spark.driver.memory", "4g")
+    .config("spark.executor.instances", "6")
+    .config("spark.executor.memory", "20g")
     .getOrCreate()
-)
-
-df = (
-    spark.read
-    .option("header", True)
-    .option("inferSchema", True)
-    .csv("data/merge.csv")
 )
 
 
 ### Spark UI Evidence
 <img width="730" height="365" alt="image" src="https://github.com/user-attachments/assets/d6d319cd-1ffb-48d7-8f20-3e30f674840c" />
-This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
+Initial setup was to have the driver memory to be 2GB, but due to large dataset we had to increase the driver memory to be 4GB.
+For the executor memory, we noticed that the execution for 6 executors with 20Gb configuration was faster than 7 executors with 17Gb.
 
 ## How many observations does your dataset have?
 We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)\
