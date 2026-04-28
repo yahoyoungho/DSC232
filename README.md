@@ -20,14 +20,28 @@ Link to dataset: https://github.com/smousavi05/STEAD
 
 ### Spark Configuration
 # for memory of 128gb 8 cores
+```python
+# for converted parquet file configuration
 spark = (
     SparkSession.builder
-    .appName("young-job")
     .config("spark.driver.memory", "4g")
     .config("spark.executor.instances", "6")
     .config("spark.executor.memory", "20g")
     .getOrCreate()
 )
+```
+
+```python
+# for metadata EDA configuration
+spark = (
+    SparkSession.builder
+    .config("spark.driver.memory", "1g")
+    .config("spark.executor.instances", "1")
+    .config("spark.executor.memory", "500m")
+    .getOrCreate()
+)
+```
+
 
 
 ### Spark UI Evidence
