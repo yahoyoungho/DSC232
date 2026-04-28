@@ -38,7 +38,7 @@ df = (
 
 
 ### Spark UI Evidence
-<insert screenshot showing multiple executors> <img width="408" height="291" alt="setup" src="https://github.com/user-attachments/assets/543e353b-ece7-4fa1-a2f4-85affa25cddc" />
+<img width="730" height="365" alt="image" src="https://github.com/user-attachments/assets/d6d319cd-1ffb-48d7-8f20-3e30f674840c" />
 This was recommended in the best practices files. Therefore, we decided to stick with the 128 GB. 
 
 ## How many observations does your dataset have?
