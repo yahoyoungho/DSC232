@@ -1,5 +1,10 @@
 # DSC232
 
+# Important TODO for file loading
+- from terminal execute `ls /scratch/$(whoami)` and get the session job name
+- copy data from network directory to scratch directory by executing `cp stead_combined.parquet /scratch/$(whoami)/{jobname}`
+
+
 ## GitHub Repository Setup (2 points)
 Link to dataset: https://github.com/smousavi05/STEAD
 ## SDSC Expanse Spark Environment
