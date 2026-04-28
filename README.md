@@ -251,6 +251,32 @@ Categorical top 10 frequent values
 
 Our target column is `trace_category` from the merge.csv metadata file. The positive label will be "earthquake_local" and the negative label will be "noise". 5314 rows were missing and dropped.
 
+
+Sample Waveform Statistics
+
+```
+--- Waveform Scale Statistics ---
+Component 1 (East):
+  Mean: -2.302661
+  Std Dev: 32890.795317
+  Min: -7183533.000000
+  Max: 7503966.000000
+
+Component 2 (North):
+  Mean: 1.713306
+  Std Dev: 23582.819392
+  Min: -3771832.750000
+  Max: 2287881.500000
+
+Component 3 (Vertical):
+  Mean: -1.299870
+  Std Dev: 10819.480801
+  Min: -592841.187500
+  Max: 651094.187500
+```
+
+
+
 ```
 +----------------+-------+
 |  trace_category|  count|
