@@ -45,6 +45,7 @@ The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tupl
 - The third element is a dictionary of three key-value pairs. The keys are `p_arrival_sample`, `s_arrival_sample`, and `coda_end_sample`. The values are strings containing numerical values.\
 - Pre-missing data handling, we would effectively deal with 7,609,884,000 (over 7 billion) rows of data (1,268,314 earthquakes * 6,000 waveform samples = 7,609,884,000).\
 - After dropping 5,314 null earthquake ids, we are effectively working with 7,578,000,000 rows of data.
+
 We combined the merge.csv and merge.hdf5 files to create the stead_combined.parquet dataset.
 - It contains 1,265,657 observations and retains the same schema as the original files **except** the waveform data has been flattened.
 
