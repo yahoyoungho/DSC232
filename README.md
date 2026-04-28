@@ -243,6 +243,8 @@ Scale of numerical variables from metadata file (merge.csv dataset)
 Numerical data distribution
 <img width="2488" height="1989" alt="image" src="https://github.com/user-attachments/assets/1db3a568-7f5d-49e6-98ba-851c5b7d32ab" />
 
+From the distribution tables, we can see that most have at least some degree of skew. This helped us decide to impute missing values with the median rather than the mean.
+
 Categorical top 10 frequent values
 <img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
 
