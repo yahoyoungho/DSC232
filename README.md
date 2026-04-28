@@ -282,35 +282,34 @@ trace name: 109C.TA_201510210555_NO
 
 ## Preprocessing Plan (3 points)
 
-- How will you handle missing values?\
-Samples in metadata that have missing values in either `trace_name` or `source_id` will be dropped as those are unique identifiers. 
+How will you handle missing values?\
+- Samples in metadata that have missing values in either `trace_name` or `source_id` will be dropped as those are unique identifiers. 
 
-For quantitative variables from the metadata, we will be imputing them with medians as a lot their distributions are skewed.
+- For quantitative variables from the metadata, we will be imputing them with medians as a lot their distributions are skewed.
 
-For qualitative variables from the metadata, we will be trying out different types of imputers to see the best performing imputer (ex: KNNImputer, Mode imputing, IterativeImputer, etc.)
+- For qualitative variables from the metadata, we will be trying out different types of imputers to see the best performing imputer (ex: KNNImputer, Mode imputing, IterativeImputer, etc.)
 
-- How will you handle data imbalance (if applicable)?\
-We will be using proportion of the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
+How will you handle data imbalance (if applicable)?\
+- We will be using proportion of the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
 
-- What transformations will you apply (scaling, encoding, feature engineering)?
-We will apply the MinMaxScaler to hdf5 file containing waveform data. As the data is a frequency data we will be exploring differnt types of filters to filter out the noise.
+What transformations will you apply (scaling, encoding, feature engineering)?\
+- We will apply the MinMaxScaler to hdf5 file containing waveform data. As the data is a frequency data we will be exploring differnt types of filters to filter out the noise.
 
-In terms of cateogorical variables we are going to apply one-hot-encoding so that we can feed in the numerical representation.
+- In terms of cateogorical variables we are going to apply one-hot-encoding so that we can feed in the numerical representation.
 
-We can feature engineering the displacement, velocity, accleration columns derived from the waveform data.
+- We can feature engineering the displacement, velocity, accleration columns derived from the waveform data.
 
-- What Spark operations will you use for preprocessing?
-
+What Spark operations will you use for preprocessing?\
 We will consider utilizing the following functions from pyspark.ml.feature:
 
-pyspark.ml.feature.Imputer: Used for imputing missing values in the metadata dataset's quantitative fields using the mean or median of the column.
+- pyspark.ml.feature.Imputer: Used for imputing missing values in the metadata dataset's quantitative fields using the mean or median of the column.
 
-pyspark.ml.feature.StringIndexer: Used to encode categorical string labels into a column of label indices.
+- pyspark.ml.feature.StringIndexer: Used to encode categorical string labels into a column of label indices.
 
-pyspark.ml.feature.OneHotEncoder: Used to map a column of category indices to a column of binary vectors for categorical metadata.
+- pyspark.ml.feature.OneHotEncoder: Used to map a column of category indices to a column of binary vectors for categorical metadata.
 
-pyspark.ml.feature.VectorAssembler: A transformer that combines a given list of columns (numerical, categorical vectors, and waveform data) into a single feature vector.
+- pyspark.ml.feature.VectorAssembler: A transformer that combines a given list of columns (numerical, categorical vectors, and waveform data) into a single feature vector.
 
-pyspark.ml.feature.StandardScaler: Used to standardize the feature vectors by subtracting the mean and scaling to unit variance.
+- pyspark.ml.feature.StandardScaler: Used to standardize the feature vectors by subtracting the mean and scaling to unit variance.
 
-pyspark.ml.feature.PCA: Used to project the high-dimensional feature vectors into a lower-dimensional space, reducing noise and capturing the most significant variance in the data.
+- pyspark.ml.feature.PCA: Used to project the high-dimensional feature vectors into a lower-dimensional space, reducing noise and capturing the most significant variance in the data.
