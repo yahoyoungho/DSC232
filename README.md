@@ -2,7 +2,7 @@
 
 # Important TODO for file loading
 - from terminal execute `ls /scratch/$(whoami)` and get the session job name
-- copy data from network directory to scratch directory by executing `cp stead_combined.parquet /scratch/$(whoami)/{jobname}`
+- copy data from network directory to scratch directory by executing `cp ~/ysuh2/data/stead_combined.parquet /expanse/lustre/scratch/$(whoami)/{jobname}`
 
 
 ## GitHub Repository Setup (2 points)
