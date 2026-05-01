@@ -349,7 +349,7 @@ How will you handle missing values?
 - For qualitative variables from the metadata, we will be trying out different types of imputers to see the best performing imputer (ex: KNNImputer, Mode imputing, IterativeImputer, etc.)
 
 How will you handle data imbalance (if applicable)?
-- We will be using proportion of the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
+- We will using undersampling on the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
 
 What transformations will you apply (scaling, encoding, feature engineering)?
 - We will apply the MinMaxScaler to hdf5 file containing waveform data. As the data is a frequency data we will be exploring differnt types of filters to filter out the noise.
