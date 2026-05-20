@@ -14,6 +14,13 @@ Link to dataset: https://github.com/smousavi05/STEAD
         - RF Regressor max_depth = 3; 40 trees: test RMSE: 93.55
         - XGBoost Regressor max_depth = 8; eta: 0.1; test RMSE: 431.35559602907716
 
+- RF Regressor num_trees: 20; max_depth: 5 test statistics graph
+<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/12ced923-a516-4b79-a219-102353e7d5c2" />
+
+- RF Regressor num_trees: 40; max_depth: 3 test statistics graph
+<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/003329ba-648c-4477-8455-3e827f1f0085" />
+
+-  The left graph of both models reveals two clusters. The graph of RF Regressor num_trees: 20; max_depth: 5 has more spread out clusters, indicating that it's predictions were more varied than that of num_trees: 40; max_depth: 3. The cluster that hovers above predicted s-wave sample value of 200 is very narrow for the latter model, but that model has a slightly higher test RMSE, suggesting that it did not quite narrow in on the correct value.
 
     - **RMSE Interpretation**: The original data is collected in 100hz. However, we down sampled the data to 20hz instead. Due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
 - Which model performs best and why?
