@@ -14,7 +14,8 @@ Link to dataset: https://github.com/smousavi05/STEAD
         - RF Regressor max_depth = 3; 40 trees: test RMSE: 93.55
         - XGBoost Regressor max_depth = 8; eta: 0.1; test RMSE: 431.35559602907716
 
-    - The original data is collected in 100hz however, we down sampled the data in 20hz instead. due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
+
+    - **RMSE Interpretation**: The original data is collected in 100hz. However, we down sampled the data to 20hz instead. Due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
 - Which model performs best and why?
     - as of now, our Random Forest Regressor with max_depth = 5 and 20 trees is showing the best performance as it is showing the lowest test RMSE score while the training and testing has a similar score as well.
 - What are the next models you are thinking of for Milestone 4 and why?
@@ -25,11 +26,11 @@ Link to dataset: https://github.com/smousavi05/STEAD
 
 ### 4. Conclusion Section (5 points)
 
-Write a conclusion for your first model:
+Our Random Forest Regressor model demonstrated the most reliable performance among all evaluated models, achieving test and train RMSEs of very close values, avoiding overfitting. However, the test RMSE of 87.47 samples, which is equivalent to an average time offset of 4.37 seconds (87.47 x 0.05s) from the true S-wave arrival time is indicative of underfitting. In seismology, especially considering the downsampling that we did, a 4.37 second window is not small, so our current model is not complex enough to fully capture the high-frequency characteristics embedded in the waveforms.
 
-- What is the conclusion of your 1st model?
-- What can be done to possibly improve it?
-- How did distributed computing help with this task?
+To improve it, we could have reduced how much we downsampled by. i.e. by 50Hz instead of 20Hz or keeping it at the original 100Hz. We only did this to try and reduce dimensionality. Additionally, we could have tried to increase the maxDepth and numTrees hyperparameters to capture more nuanced relationships within the data. Lastly, there are numerous types of feature engineering methods specific to seismic data that we found through research, such as STA/LTA (Short-Term Average / Long-Term Average).
+
+The speedup analysis indicates that we weren't able to optimize well enough, thus not making full use of distributed computing to help is in this task. There is the possibility that the bottleneck we are clearly experiencing has something to do with the the way MLLib is performing this.
 
 ### 5. Speedup Analysis (5 points)
 
@@ -65,7 +66,7 @@ Write a conclusion for your first model:
 
 ---
 
-based on the theortical maximum speedup of x7. 
+based on the theortical maximum speedup of x7. Our cumulative speedup was 0.99x.
 
 - Waveform frequency downsampling
     - 1.1x speedup with ~10.5% estimated parallelizable fraction of code
