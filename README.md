@@ -8,9 +8,17 @@ Link to dataset: https://github.com/smousavi05/STEAD
 Answer the following questions:
 
 - Where does your model fit in the fitting graph (underfitting vs. overfitting)?
+    - our model is RF Regressor model is underfitting, while our XGBoost Regressor was overfitting.
 - Build at least one model with **different hyperparameters** and compare results
+    - We have modeled Random Forest Regressor one with 20 `num_trees` with `max_depth` 5 and another model with 40 `num_trees` with `max_depth` 3. For XGBoost Regressor we had the hyper parameter set as `max_depth` = 8 with `eta` = 0.1 .
+    - as a result, our baseline model with 20 trees with max_depth 5 had a better performance 
+        - RF Regressor max_depth = 5; 20 trees: RMSE: 87.47 
+        - RF Regressor max_depth = 3; 40 trees: RMSE: 93.55
+        - XGBoost Regressor max_depth = 8; eta: 0.1; RMSE: 431.35559602907716
 - Which model performs best and why?
+    - as of now, our Random Forest Regressor with max_depth = 5 and 20 trees is showing the best performance as it is showing the lowest RMSE score while the training and validation has a similar score as well
 - What are the next models you are thinking of for Milestone 4 and why?
+    - As our data is a time series heavy dataset, we might be looking into some time series applicable models such as GRU cells or might be looking into a model name PhaseNet
 
 ---
 
