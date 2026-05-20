@@ -73,7 +73,7 @@ The speedup analysis indicates that we weren't able to optimize well enough, thu
 
 ---
 
-based on the theortical maximum speedup of x7. Our cumulative speedup was 0.99x.
+Compared to the theoretical maximum speedup of x7, our cumulative speedup was 0.99x.
 
 - Waveform frequency downsampling
     - 1.1x speedup with ~10.5% estimated parallelizable fraction of code
