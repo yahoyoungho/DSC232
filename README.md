@@ -62,3 +62,16 @@ Write a conclusion for your first model:
 |---|---|---|---|
 | 1 | 362.94 | 1.00x | 100% |
 | 7 | 370.58 | 0.98x | 14% |
+
+---
+
+based on the theortical maximum speedup of x7. 
+
+- Waveform frequency downsampling
+    - 1.1x speedup with ~10.5% estimated parallelizable fraction of code
+- array to vector
+    - 1.01x speedup with ~0.7% estimated parallelizable fraction of code
+- pipeline (VectorAssembler)
+    - 0.99x speedup with ~-0.9% estimated parallelizable fraction of code
+- Evaluation runtime
+    - 0.98x speedup with ~-2.5% estimated parallelizable fraction of code
