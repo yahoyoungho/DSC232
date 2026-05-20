@@ -13,6 +13,8 @@ Link to dataset: https://github.com/smousavi05/STEAD
         - RF Regressor max_depth = 5; 20 trees: test RMSE: 87.47; train RMSE: 84.71
         - RF Regressor max_depth = 3; 40 trees: test RMSE: 93.55
         - XGBoost Regressor max_depth = 8; eta: 0.1; test RMSE: 431.35559602907716
+
+    - The original data is collected in 100hz however, we down sampled the data in 20hz instead. due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
 - Which model performs best and why?
     - as of now, our Random Forest Regressor with max_depth = 5 and 20 trees is showing the best performance as it is showing the lowest test RMSE score while the training and testing has a similar score as well.
 - What are the next models you are thinking of for Milestone 4 and why?
