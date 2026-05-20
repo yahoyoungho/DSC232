@@ -24,6 +24,36 @@ Write a conclusion for your first model:
 
 ### 5. Speedup Analysis (5 points)
 
+**Waveform Frequency Downsampling**
+| Executors | Time (sec) | Speedup | Efficiency |
+|---|---|---|---|
+| 1 | 3.11 | 1.00x | 100% |
+| 7 | 2.78 | 1.12x | 16% |
+
+---
+
+**Waveform Array to Vector**
+| Executors | Time (sec) | Speedup | Efficiency |
+|---|---|---|---|
+| 1 | 3.476 | 1.00x | 100% |
+| 7 | 3.481 | 0.99x | 14.3% |
+
+---
+
+**Pipeline (VectorAssembler)**
+| Executors | Time (sec) | Speedup | Efficiency |
+|---|---|---|---|
+| 1 | 447.48 | 1.00x | 100% |
+| 7 | 470.61 | 0.95x | 13.6% |
+
+---
+
+**Evaluation Runtime**
+| Executors | Time (sec) | Speedup | Efficiency |
+|---|---|---|---|
+| 1 | 362.94 | 1.00x | 100% |
+| 7 | 389.26 | 0.93x | 13.3% |
+
 ---
 
 # Distributed XGBoost Regression on STEAD Waveforms (PySpark)
