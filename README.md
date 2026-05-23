@@ -338,7 +338,7 @@ Just looking at the raw waveform array data does not garner any apparent informa
 
 ---
 
-## Fitting Analysis
+## Model Analysis
 
 - Our RF Regressor model is underfitting, while our XGBoost Regressor was severely overfitting.
 - We have one Random Forest Regressor model with 20 `num_trees` and `max_depth` 5.
