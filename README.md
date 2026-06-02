@@ -85,10 +85,17 @@ The following notebooks contain the main project code:
 
 | Notebook | Purpose |
 |---|---|
+| `EDA.ipynb` | EDA using Spark with parquet file |
 | `hdf5_2_parquet.ipynb` | Converts and combines the HDF5 waveform data and CSV metadata into Parquet format |
-| `xgboost_test_7.30.ipynb` | Spark XGBoost implementation |
+| `phasenet_no_svd_prediction_analysis.ipynb` | model evaluation on phasenet without SVD preprocessing on waveform data |
+| `phasenet_no_svd.ipynb` | PhaseNet training using Ray with no SVD preprocessing |
+| `phasenet_svd.ipynb` | PhaseNet training using Ray with SVD preprocessing  |
 | `ray xgboost.ipynb` | Ray XGBoost implementation |
-| Additional EDA/model notebooks | Data exploration, preprocessing, baseline models, SVD, and PhaseNet experiments |
+| `rayio_svd.ipynb` | Applied SVD into waveform data |
+| `s_wave_pipeline_1_executor.ipynb` | Spark speedup comparsion for RandomForest Regressor |
+| `s_wave_pipeline_7_executors.ipynb` | Spark speedup comparsion for RandomForest Regressor |
+| `xgboost_test_7.30.ipynb` | Spark XGBoost implementation |
+
 
 ---
 
