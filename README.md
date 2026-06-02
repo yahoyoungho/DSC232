@@ -601,9 +601,9 @@ Reference implementation used for model development:
 
 | Name | Title / Role | Contribution |
 |---|---|---|
-| TODO | TODO | TODO |
-| TODO | TODO | TODO |
-| TODO | TODO | TODO |
+| Erik P. | Coder, Writer, Project Manager | EDA pipelining, s_wave_pipeline_7_executor.ipynb, Jade code review, SVD preprocessing, Jade code feedback, Readme update for all milestones, Meeting Scheduling|
+| Jade R. | Coder | xgboost coder |
+| Young S. | Coder, Writer, Project Manager | Part of EDA pipelining, hdf5 to parquet conversion, Phasenet modeling, s_wave_pipeline_1_executor.ipynb, Jade code review,  Jade code feedback, Meeting Scheduling|
 
 Required format from the assignment:
 
