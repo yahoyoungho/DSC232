@@ -338,7 +338,7 @@ Just looking at the raw waveform array data does not garner any apparent informa
 
 ---
 
-## Model Analysis
+## Baseline Model(s) Fitting Analysis
 
 - Our RF Regressor model is underfitting, while our XGBoost Regressor was severely overfitting.
 - We have one Random Forest Regressor model with 20 `num_trees` and `max_depth` 5.
@@ -366,10 +366,55 @@ Just looking at the raw waveform array data does not garner any apparent informa
 
 ---
 
-## Conclusion Section
+## Baseline Model(s) Conclusion
 
 Our Random Forest Regressor model demonstrated the most reliable performance among all evaluated models, achieving test and train RMSEs of very close values, avoiding overfitting. However, the test RMSE of 87.47 samples, which is equivalent to an average time offset of 4.37 seconds (87.47 x 0.05s) from the true S-wave arrival time is indicative of underfitting. In seismology, especially considering the downsampling that we did, a 4.37 second window is not small, so our current model is not complex enough to fully capture the high-frequency characteristics embedded in the waveforms.
 
 To improve it, we could have reduced how much we downsampled by. i.e. by 50Hz instead of 20Hz or keeping it at the original 100Hz. We only did this to try and reduce dimensionality. Additionally, we could have tried to increase the maxDepth and numTrees hyperparameters to capture more nuanced relationships within the data. Lastly, there are numerous types of feature engineering methods specific to seismic data that we found through research, such as STA/LTA (Short-Term Average / Long-Term Average).
 
 The speedup analysis indicates that we weren't able to optimize well enough, thus not making full use of distributed computing to help is in this task. There is the possibility that the bottleneck we are clearly experiencing has something to do with the the way MLLib is performing this.
+
+---
+
+# Final Model(s)
+
+## Dimensionality Reduction
+
+We chose to apply SVD to our waveform data as a method of dimensionality reduction. Applying SVD to a matrix of 3 channel waveform data is known as polarization filtering in seismology. The first principal component represents the dominant direction of particle motion (the actual earthquake wave). The matrix is reconstructed using only the top components, and the lower components are treated as background noise.
+
+SVD Mathematical Explanation:
+(Images sourced from Google Gemini)
+
+<img width="304" height="48" alt="Screenshot 2026-06-01 184144" src="https://github.com/user-attachments/assets/64effe61-da45-4216-b42c-ea5795c20461" />
+
+$U_1$ is a single column vector of shape (6000, 1). This is the "Master Waveform."
+$S_1$ is a single number (a scalar scaling factor).
+$V_1^T$ is a single row vector of shape (1, 3). This represents the $(N, Z, E)$ directional orientation of the wave.
+By multiplying them together, we get our (6000, 3) matrix back:
+
+<img width="688" height="94" alt="Screenshot 2026-06-01 184227" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
+
+Every single channel in the denoised output is now just the exact same master waveform ($U_1$), simply multiplied by a different directional weight ($V_1^T$).
+
+In conclusion SVD (polarization filter) projects our 3D space of seismic waves onto a 1D line. The following plot provides this visualization.
+
+<img width="1464" height="690" alt="image" src="https://github.com/user-attachments/assets/47387fd6-3c7d-44a7-8782-cb07b21203ba" />
+
+### Plot Color Interpretation
+**Left Plot**
+Dark Purple / Dark Blue: This is the start of the plot's time window (start_idx). This is the ground motion right before the main S-wave energy hits.
+
+Teal / Green: The middle of the time window. This is approximately the peak of the S-wave arrival.
+
+Bright Yellow: The very end of your time window (end_idx). This is the lingering motion as the wave passes.
+
+**Right Plot**
+Dark Purple: Right before the main S-wave energy hits.
+
+Vibrant Pink / Orange: The middle of the window (the S-wave arrival).
+
+Bright Yellow: The end of the window; the lingering motion as the wave passes.
+
+<img width="1389" height="790" alt="image" src="https://github.com/user-attachments/assets/63199fd0-8c0f-4a26-9dbb-dc58d8dd7120" />
+
+As you can see, we see some amplitude after the arrival of the earthquake's first wave. However, the amplitude is significantly larger resulting from the arrival of the earthquake's second wave. This confirms the commonly held notion that the second waves of earthquakes are the danger.
