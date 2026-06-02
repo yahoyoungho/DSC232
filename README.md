@@ -547,6 +547,26 @@ Predicted S Wave Arrival Time: 10.02s (Index: 1002)
 
 ---
 
+<img width="1389" height="490" alt="image" src="https://github.com/user-attachments/assets/31403071-dbd4-4c11-80d0-d13befd30b06" />
+
+```
+==================================================
+             RESIDUAL ANALYSIS REPORT
+==================================================
+P-Wave Picks Evaluated : 16350
+  - Mean Error (Bias)  : 0.1772 seconds
+  - Median Error       : 0.0100 seconds
+  - Std Dev (Spread)   : 2.0760 seconds
+  - Mean Absolute Error: 0.2153 seconds
+--------------------------------------------------
+S-Wave Picks Evaluated : 16350
+  - Mean Error (Bias)  : 0.0619 seconds
+  - Median Error       : 0.0100 seconds
+  - Std Dev (Spread)   : 0.7168 seconds
+  - Mean Absolute Error: 0.1280 seconds
+==================================================
+```
+
 # Discussion
 
 The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior.
