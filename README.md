@@ -45,7 +45,11 @@ spark = (
     .getOrCreate()
 )
 ```
+## Introduction To our Project
+We chose this data since we thought signal data is unique compared to tabular data.We thought this dataset is interesting since we can predict the S-wave arrival that can possibly help people notice that a bigger wave is coming (s-wave). By having the model predict the type of waveform (earthquake vs noise), it is also capable of predicitng the more impactful wave, which could potentially minimize fatalities.
 
+This problem required big data and distributed computing because the dataset was massive to fit in a single machine. Therefore, we needed a distributed framework like ray/spark to preprocess and train the model in parallel to achieve high speed and efficiency.
+We would not be able to even load the whole dataset and do any necessary processing of the data without spark/ray. With the help of ray/spark framework, we were able to load and pre process and clean the data as ncessary in a parallel manner.
 
 
 ### Spark UI Evidence
