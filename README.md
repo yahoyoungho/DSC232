@@ -383,6 +383,16 @@ The first modeling stage predicted `s_arrival_sample` using distributed regressi
 The baseline model was used to determine whether distributed tree-based models could learn meaningful relationships from the waveform-derived feature representation. It also provided a comparison point for the final SVD and PhaseNet approach.
 
 ---
+### Preprocessing & Label Generation
+
+1. Filtered raw waveforms using a 4th-order Butterworth bandpass filter from 1.0 Hz to 20.0 Hz.
+2. Normalized each of the 3 components individually using standard Z-score normalization (`(x - mean) / (std + 1e-6)`).
+3. Evaluated true arrival markers (`p_index` and `s_index`) to ensure they fall within valid sequence boundaries.
+4. Generated 1D continuous target labels for P-waves and S-waves using a Gaussian distribution with `sigma=10`.
+5. Calculated a Noise curve as the inverse of the maximum probability across the phase curves (`1.0 - max(P, S)`).
+6. Stabilized and forced sum-to-one compliance across the 3 channel classes at every time-step using safe division.
+7. Packages processed sequences and distribution vectors as float32 PyTorch tensors (`"x"` and `"y"`) inside a distributed dataset.
+
 
 ## Model 2: SVD Dimensionality Reduction and PhaseNet
 
