@@ -342,16 +342,15 @@ The waveform plots provide visual evidence that earthquake and noise traces have
 
 The preprocessing pipeline converted raw seismic files into a distributed modeling dataset.
 
-### Main Preprocessing Steps
+### Preprocessing (Spark)
 
 1. Loaded the metadata from `merge.csv` using Spark.
 2. Loaded waveform data from `merge.hdf5`.
 3. Joined waveform observations with metadata using trace identifiers.
 4. Flattened each `(6000, 3)` waveform into a vector of length `18,000`.
-5. Dropped rows with missing target labels.
-6. Imputed missing numerical metadata values using median imputation.
-7. Removed redundant or low-utility columns such as `source_distance_deg` and `receiver_latitude`.
-8. Saved the combined result as `stead_combined.parquet` for faster downstream loading.
+5. Imputed missing numerical metadata values using median imputation.
+6. Removed redundant or low-utility columns such as `source_distance_deg` and `receiver_latitude`.
+7. Saved the combined result as `stead_combined.parquet` for faster downstream loading.
 
 ### Spark Configuration Used for Parquet Processing
 
@@ -442,29 +441,18 @@ The model was trained on a subsample of 80,000 rows, equal to approximately 7.77
 
 # Results
 
-## Exploratory Data Results
-
-The exploratory analysis showed that:
-
-- The dataset is large enough to require distributed processing.
-- Metadata features contain skewed distributions, motivating median imputation.
-- The target labels are imbalanced, with more earthquake observations than noise observations.
-- Some metadata fields are redundant, especially distance variables expressed in different units.
-- Waveform plots show visible differences between earthquake and noise traces.
-
 ---
 
 ## Model 1 Results
 
 ### Baseline Model Performance
 
-| Model | Train RMSE | Test RMSE | Interpretation |
+| Model | Train RMSE | Test RMSE |
 |---|---:|---:|---|
-| Random Forest Regressor, `num_trees=20`, `max_depth=5` | 84.71 | 87.47 | Best baseline result; train/test scores are close |
-| Random Forest Regressor, `num_trees=40`, `max_depth=3` | Not reported | 93.55 | Higher test error; likely more underfit |
-| XGBoost Regressor, `max_depth=8`, `eta=0.1` | Not reported | 431.36 | Severe overfitting or failed generalization |
+| Random Forest Regressor, `num_trees=20`, `max_depth=5` | 84.71 | 87.47 |
+| Random Forest Regressor, `num_trees=40`, `max_depth=3` | Not reported | 93.55 |
+| XGBoost Regressor, `max_depth=8`, `eta=0.1` | 1.05 | 431.36 |
 
-The best baseline model was the Random Forest Regressor with `num_trees=20` and `max_depth=5`. Its train and test RMSE values were close, suggesting that it did not severely overfit. However, the RMSE was still large enough to indicate underfitting.
 
 Because the data was downsampled to 20 Hz, each sample corresponds to 0.05 seconds. Therefore, the best baseline test RMSE corresponds to approximately:
 
@@ -549,8 +537,11 @@ We realized including metadata as predictors was an issue of collinearity and da
 1. `source_distance_deg` and `source_distance_km` were nearly redundant because they represent distance in different units.
 2. `receiver_latitude` and `source_latitude` showed a relationship that required further inspection.
 ---
-Our initial objective was to predict `trace_category`, which required the above preprocessing. However, as our objective changed to predicting `s_arrival_sample`, we could exclude "noise" `trace_category` and no longer needed to preprocess the metadata.
-The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior.
+
+# Discussion (Cont.)
+
+Our initial objective was to predict `trace_category`, which required the above preprocessing. However, as our objective changed to predicting `s_arrival_sample`, and we found metadata to cause data leakage, we could exclude "noise" `trace_category` and no longer needed to preprocess the metadata.
+
 The baseline Random Forest Regressor was a useful first model because it established a distributed machine learning benchmark for predicting `s_arrival_sample`. Its train and test RMSE values were close, which indicates that the model did not suffer from severe overfitting. However, the best baseline RMSE corresponded to an average timing error of approximately 4.37 seconds. For seismic arrival prediction, this is too large to be considered highly accurate. Therefore, the baseline model fits in the underfitting region of the fitting graph: it generalizes similarly across train and test sets, but its total error remains too high.
 
 The XGBoost baseline performed much worse on the test set, with a test RMSE of 431.36. This suggests severe overfitting, failed generalization, or a mismatch between the model configuration and feature representation. In contrast, the Random Forest model was more stable but not expressive enough to capture the full structure of waveform signals.
@@ -601,9 +592,9 @@ Reference implementation used for model development:
 
 | Name | Title / Role | Contribution |
 |---|---|---|
-| Erik P. | Coder, Writer, Project Manager | EDA pipelining, s_wave_pipeline_7_executor.ipynb, Jade code review, SVD preprocessing, Jade code feedback, Readme update for all milestones, Meeting Scheduling|
-| Jade R. | Coder | xgboost coder |
-| Young S. | Coder, Writer, Project Manager | Part of EDA pipelining, hdf5 to parquet conversion, Phasenet modeling, s_wave_pipeline_1_executor.ipynb, Jade code review,  Jade code feedback, Meeting Scheduling|
+| Erik P. | Coder, Writer, Project Manager | EDA pipelining, s_wave_pipeline_7_executor.ipynb, Jade code review, SVD preprocessing, Jade code feedback, README for all milestones, Meeting Scheduling|
+| Jade R. | Coder | xgboost coder, EDA comments |
+| Young S. | Coder, Writer, Project Manager | Part of EDA pipelining, hdf5 to parquet conversion, Phasenet modeling, s_wave_pipeline_1_executor.ipynb, Jade code review,  Jade code feedback, Meeting Scheduling, README updates|
 
 Required format from the assignment:
 
