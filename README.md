@@ -1,7 +1,7 @@
 # DSC 232R Final Project: Distributed Seismic Wave Arrival Prediction
 
 **Dataset:** [STEAD: Stanford Earthquake Dataset](https://github.com/smousavi05/STEAD)  
-**Primary objective:** Predict seismic wave arrival behavior from large-scale waveform data using distributed data processing and machine learning.
+**Primary objective:** Predict seismic wave arrival behavior from large-scale waveform data using distributed data processing.
 
 ---
 
@@ -49,19 +49,15 @@ The original dataset is available from the STEAD repository:
 
 ### Project Data Files
 
-We used three main data files:
+We used 5 main data files/directories:
 
-| File | Description |
+| File/Directory | Description |
 |---|---|
 | `merge.csv` | Metadata file containing earthquake and noise trace information |
 | `merge.hdf5` | Waveform file containing raw 3-channel seismic waveform arrays |
 | `stead_combined.parquet` | Combined Parquet file generated from the CSV and HDF5 files |
-
-The generated Parquet file is stored in:
-
-```text
-ysuh2/data/stead_combined.parquet
-```
+| `stead_version4` | Parquet files containing waveform data, separating the 3 waveform channels into separate columns |
+| `denoised_waveforms_parquets` | Parquet files containing SVD-applied waveform data with "noise" `trace_category` excluded |
 
 ### File Loading on SDSC Expanse
 
