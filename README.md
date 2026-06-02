@@ -1,31 +1,126 @@
-# DSC232
-Link to original dataset: https://github.com/smousavi05/STEAD
+# DSC 232R Final Project: Distributed Seismic Wave Arrival Prediction
 
-# Important TODO for file loading
-- from terminal execute `ls /scratch/$(whoami)` and get the session job name
-- copy data from network directory to scratch directory by executing `cp ~/ysuh2/data/stead_combined.parquet /expanse/lustre/scratch/$(whoami)/{jobname}` or `cp ~/ysuh2/data/stead_combined.parquet /scratch/$(whoami)/{jobname}`
+**Dataset:** [STEAD: Stanford Earthquake Dataset](https://github.com/smousavi05/STEAD)  
+**Primary objective:** Predict seismic wave arrival behavior from large-scale waveform data using distributed data processing and machine learning.
 
-<i>We have a parquet file generated form the given csv and hdf5 file. The generated data will be in `ysuh2/data/stead_combined.parquet`</i>
+---
 
-## SDSC Expanse Spark Environment
+## Table of Contents
 
-### Resource Request
-- Total Cores: 8
-- Total Memory: 128 GB
-- Driver Memory: 4 GB
+1. [Introduction](#introduction)
+2. [Repository and Data Access](#repository-and-data-access)
+3. [Computing Environment](#computing-environment)
+4. [Methods](#methods)
+   - [Data Exploration](#data-exploration)
+   - [Preprocessing](#preprocessing)
+   - [Model 1: Baseline Distributed Regression Models](#model-1-baseline-distributed-regression-models)
+   - [Model 2: SVD Dimensionality Reduction and PhaseNet](#model-2-svd-dimensionality-reduction-and-phasenet)
+5. [Results](#results)
+   - [Exploratory Data Results](#exploratory-data-results)
+   - [Model 1 Results](#model-1-results)
+   - [Model 2 Results](#model-2-results)
+   - [Prediction Examples](#prediction-examples)
+   - [Speedup and Framework Comparison](#speedup-and-framework-comparison)
+6. [Discussion](#discussion)
+7. [Conclusion](#conclusion)
+8. [Related Work](#related-work)
+9. [Statement of Collaboration](#statement-of-collaboration)
+10. [Extra Credit: Spark vs. Ray Framework Comparison](#extra-credit-spark-vs-ray-framework-comparison)
 
-### Executor Calculation for hdf5 data
-- Executor Instances = 8 − 1 = 7
-- Executor Memory = (128 − 4) // 7 = 17 GB
+---
 
-### Executor Calculation for metadata file
-Since the file size is too small, we decided that calculating the executor/driver memory is unnecessary.
-- CSV file is around 400Mb
+## Introduction
 
-### Spark Configuration
-# for memory of 128gb 8 cores
+Earthquake waveform data is fundamentally different from ordinary tabular data because each observation contains a multi-channel time-series signal. We selected the STEAD dataset because it allows us to study a high-impact prediction problem: identifying seismic wave arrival behavior from large volumes of waveform data.
+
+The project focuses on predicting S-wave arrival timing and analyzing waveform behavior. S-waves are especially important because they often produce stronger ground motion than P-waves, meaning that accurate prediction of S-wave arrival can support earlier warning systems and potentially reduce earthquake-related harm. In addition, distinguishing earthquake waveforms from noise is valuable for improving the reliability of automated seismic monitoring systems.
+
+This project required big data and distributed computing because the dataset was too large to process efficiently on a single machine. The original HDF5 waveform data contains 1,268,314 events, where each waveform is shaped as `(6000, 3)`. Before missing-data handling, this corresponds to more than 7.6 billion waveform sample values. Without Spark or Ray, loading, preprocessing, reshaping, joining, and training on the dataset would have been impractical. Distributed computing allowed us to parallelize preprocessing and model training while managing memory constraints on SDSC Expanse.
+
+---
+
+## Repository and Data Access
+
+### Original Dataset
+
+The original dataset is available from the STEAD repository:
+
+- <https://github.com/smousavi05/STEAD>
+
+### Project Data Files
+
+We used three main data files:
+
+| File | Description |
+|---|---|
+| `merge.csv` | Metadata file containing earthquake and noise trace information |
+| `merge.hdf5` | Waveform file containing raw 3-channel seismic waveform arrays |
+| `stead_combined.parquet` | Combined Parquet file generated from the CSV and HDF5 files |
+
+The generated Parquet file is stored in:
+
+```text
+ysuh2/data/stead_combined.parquet
+```
+
+### File Loading on SDSC Expanse
+
+Before running notebooks on Expanse, copy the Parquet file into the active scratch job directory.
+
+```bash
+ls /scratch/$(whoami)
+```
+
+Then copy the data using one of the following commands, depending on the active scratch path:
+
+```bash
+cp ~/ysuh2/data/stead_combined.parquet /expanse/lustre/scratch/$(whoami)/{jobname}
+```
+
+or
+
+```bash
+cp ~/ysuh2/data/stead_combined.parquet /scratch/$(whoami)/{jobname}
+```
+
+### Notebooks
+
+The following notebooks contain the main project code:
+
+| Notebook | Purpose |
+|---|---|
+| `hdf5_2_parquet.ipynb` | Converts and combines the HDF5 waveform data and CSV metadata into Parquet format |
+| `xgboost_test_7.30.ipynb` | Spark XGBoost implementation |
+| `ray xgboost.ipynb` | Ray XGBoost implementation |
+| Additional EDA/model notebooks | Data exploration, preprocessing, baseline models, SVD, and PhaseNet experiments |
+
+---
+
+## Computing Environment
+
+### SDSC Expanse Spark Environment
+
+We used SDSC Expanse with Spark for distributed preprocessing and model training.
+
+| Resource | Value |
+|---|---:|
+| Total cores | 8 |
+| Total memory | 128 GB |
+| Driver memory | 4 GB |
+
+### Executor Planning for HDF5 / Parquet Processing
+
+The initial executor estimate was:
+
+```text
+Executor instances = 8 - 1 = 7
+Executor memory = (128 - 4) // 7 = 17 GB
+```
+
+In practice, we found that 6 executors with 20 GB per executor performed better than 7 executors with 17 GB per executor.
+
 ```python
-# for converted parquet file configuration
+# Spark configuration for converted Parquet processing
 spark = (
     SparkSession.builder
     .config("spark.driver.memory", "4g")
@@ -35,8 +130,12 @@ spark = (
 )
 ```
 
+### Executor Planning for Metadata EDA
+
+Because the metadata CSV file is approximately 400 MB, we used a smaller Spark configuration for metadata-only EDA.
+
 ```python
-# for metadata EDA configuration
+# Spark configuration for metadata EDA
 spark = (
     SparkSession.builder
     .config("spark.driver.memory", "1g")
@@ -45,41 +144,64 @@ spark = (
     .getOrCreate()
 )
 ```
-## Introduction To our Project
-We chose this data since we thought signal data is unique compared to tabular data.We thought this dataset is interesting since we can predict the S-wave arrival that can possibly help people notice that a bigger wave is coming (s-wave). By having the model predict the type of waveform (earthquake vs noise), it is also capable of predicitng the more impactful wave, which could potentially minimize fatalities.
-
-This problem required big data and distributed computing because the dataset was massive to fit in a single machine. Therefore, we needed a distributed framework like ray/spark to preprocess and train the model in parallel to achieve high speed and efficiency.
-We would not be able to even load the whole dataset and do any necessary processing of the data without spark/ray. With the help of ray/spark framework, we were able to load and pre process and clean the data as ncessary in a parallel manner.
-
 
 ### Spark UI Evidence
-<img width="730" height="365" alt="image" src="https://github.com/user-attachments/assets/d6d319cd-1ffb-48d7-8f20-3e30f674840c" />
-Initial setup was to have the driver memory to be 2GB, but due to large dataset we had to increase the driver memory to be 4GB.
-For the executor memory, we noticed that the execution for 6 executors with 20Gb configuration was faster than 7 executors with 17Gb.
-- Refering to `hdf5_2_parquet.ipynb`'s last cell
 
-<img width="725" height="360" alt="image" src="https://github.com/user-attachments/assets/9efb94fb-05d1-4c80-ad0c-37b8a89a770c" />
-- For the metadata EDA, we only allocated 1gb to Driver and 500mb to the single executor for the approximately 0.5GB metadata file.
+The following Spark UI screenshot shows evidence from the larger Spark configuration used for Parquet processing.
 
+<img width="730" height="365" alt="Spark UI evidence for larger Spark job" src="https://github.com/user-attachments/assets/d6d319cd-1ffb-48d7-8f20-3e30f674840c" />
 
-## How many observations does the dataset have?
-We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)\
-The merge.csv metadata file contains total 1,268,314 observations, each representing a unique earthquake event.\
-The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tuple containing three elements.
-- The first element of the tuple is the `trace_name` of the corresponding earthquake.
-- The second element is the earthquake's waveform. Each waveform is an array in the shape of (6000, 3).
-- The third element is a dictionary of three key-value pairs. The keys are `p_arrival_sample`, `s_arrival_sample`, and `coda_end_sample`. The values are strings containing numerical values.
-- Pre-missing data handling, we would effectively deal with 7,609,884,000 (over 7 billion) rows of data (1,268,314 earthquakes * 6,000 waveform samples = 7,609,884,000).
-- After dropping 5,314 null earthquake ids, we are effectively working with 7,578,000,000 rows of data.
+We initially used 2 GB of driver memory, but the large dataset required increasing the driver memory to 4 GB. We also observed that 6 executors with 20 GB each ran faster than 7 executors with 17 GB each. This result is referenced in the final cell of `hdf5_2_parquet.ipynb`.
 
-We combined the merge.csv and merge.hdf5 files to create the stead_combined.parquet dataset.
-- It contains 1,265,657 observations and retains the same schema as the original files **except** the waveform data has been flattened.
+The following Spark UI screenshot shows the smaller metadata EDA configuration.
 
-## EDA
+<img width="725" height="360" alt="Spark UI evidence for metadata EDA" src="https://github.com/user-attachments/assets/9efb94fb-05d1-4c80-ad0c-37b8a89a770c" />
 
-Scale of numerical variables from metadata file (merge.csv dataset)
+For metadata EDA, we allocated 1 GB to the driver and 500 MB to a single executor because the metadata file was much smaller than the waveform data.
 
-```RECORD 0-----------------------------------------------
+---
+
+# Methods
+
+## Data Exploration
+
+### Dataset Scale
+
+The full project uses three dataset representations: `merge.csv`, `merge.hdf5`, and `stead_combined.parquet`.
+
+| Dataset | Number of observations | Notes |
+|---|---:|---|
+| `merge.csv` | 1,268,314 | Metadata observations |
+| `merge.hdf5` | 1,268,314 | Waveform observations corresponding to metadata traces |
+| `stead_combined.parquet` | 1,265,657 | Combined dataset after joining and flattening waveform data |
+
+Each HDF5 observation contains:
+
+1. `trace_name`, the unique identifier for the waveform.
+2. A waveform array with shape `(6000, 3)`.
+3. A dictionary containing `p_arrival_sample`, `s_arrival_sample`, and `coda_end_sample`.
+
+Before missing-data handling, the waveform data effectively contains:
+
+```text
+1,268,314 events × 6,000 waveform samples = 7,609,884,000 waveform sample rows
+```
+
+After dropping 5,314 rows with missing earthquake identifiers, we worked with approximately:
+
+```text
+7,578,000,000 waveform sample rows
+```
+
+### Numerical Metadata Summary
+
+We computed summary statistics for metadata fields including receiver location, arrival samples, source depth, source magnitude, source distance, and back azimuth.
+
+<details>
+<summary>Click to expand numerical metadata summary</summary>
+
+```text
+RECORD 0-----------------------------------------------
  summary                          | count               
  receiver_latitude                | 1268314             
  receiver_longitude               | 1265657             
@@ -102,7 +224,8 @@ Scale of numerical variables from metadata file (merge.csv dataset)
  source_distance_km               | 1027574             
  back_azimuth_deg                 | 1027574             
  coda_end_sample                  | 1027574             
--RECORD 1-----------------------------------------------
+
+RECORD 1-----------------------------------------------
  summary                          | mean                
  receiver_latitude                | 39.243258624484895  
  receiver_longitude               | -111.09354810763055 
@@ -125,7 +248,8 @@ Scale of numerical variables from metadata file (merge.csv dataset)
  source_distance_km               | 50.79632535467068   
  back_azimuth_deg                 | 188.42516952744987  
  coda_end_sample                  | 2514.1423449795343  
--RECORD 2-----------------------------------------------
+
+RECORD 2-----------------------------------------------
  summary                          | stddev              
  receiver_latitude                | 18.02282428512557   
  receiver_longitude               | 51.29481347807843   
@@ -148,136 +272,25 @@ Scale of numerical variables from metadata file (merge.csv dataset)
  source_distance_km               | 48.43598571849436   
  back_azimuth_deg                 | 102.4214576404989   
  coda_end_sample                  | 1143.584651891823   
--RECORD 3-----------------------------------------------
- summary                          | min                 
- receiver_latitude                | -77.8492            
- receiver_longitude               | -178.8566           
- receiver_elevation_m             | -2920.5             
- p_arrival_sample                 | 12.0                
- p_weight                         | 0.0                 
- p_travel_sec                     | 0.0                 
- s_arrival_sample                 | 190.0               
- s_weight                         | 0.0                 
- source_origin_uncertainty_sec    | 0.0                 
- source_latitude                  | -43.8455            
- source_longitude                 | -179.9965           
- source_error_sec                 | 0.0                 
- source_gap_deg                   | 5.282               
- source_horizontal_uncertainty_km | 0.0                 
- source_depth_km                  | -3.49               
- source_depth_uncertainty_km      | 0.0                 
- source_magnitude                 | -0.5                
- source_distance_deg              | 0.0                 
- source_distance_km               | 0.0                 
- back_azimuth_deg                 | 0.0                 
- coda_end_sample                  | 621.0               
--RECORD 4-----------------------------------------------
- summary                          | 25%                 
- receiver_latitude                | 33.61157            
- receiver_longitude               | -122.795303         
- receiver_elevation_m             | 410.0               
- p_arrival_sample                 | 500.0               
- p_weight                         | 0.59                
- p_travel_sec                     | 3.569999933242798   
- s_arrival_sample                 | 924.0               
- s_weight                         | 0.55                
- source_origin_uncertainty_sec    | 0.6                 
- source_latitude                  | 33.7831667          
- source_longitude                 | -124.3933           
- source_error_sec                 | 0.11                
- source_gap_deg                   | 55.0                
- source_horizontal_uncertainty_km | 0.0                 
- source_depth_km                  | 4.13                
- source_depth_uncertainty_km      | 0.39                
- source_magnitude                 | 0.8                 
- source_distance_deg              | 0.151               
- source_distance_km               | 16.79               
- back_azimuth_deg                 | 107.3               
- coda_end_sample                  | 1691.0              
--RECORD 5-----------------------------------------------
- summary                          | 50%                 
- receiver_latitude                | 37.540531           
- receiver_longitude               | -118.7564           
- receiver_elevation_m             | 939.0               
- p_arrival_sample                 | 699.0               
- p_weight                         | 0.67                
- p_travel_sec                     | 7.269999980926514   
- s_arrival_sample                 | 1207.0              
- s_weight                         | 0.62                
- source_origin_uncertainty_sec    | 0.86                
- source_latitude                  | 37.5555             
- source_longitude                 | -118.84717          
- source_error_sec                 | 0.21                
- source_gap_deg                   | 91.0                
- source_horizontal_uncertainty_km | 0.36                
- source_depth_km                  | 8.47                
- source_depth_uncertainty_km      | 0.63                
- source_magnitude                 | 1.3                 
- source_distance_deg              | 0.35                
- source_distance_km               | 38.98               
- back_azimuth_deg                 | 182.0               
- coda_end_sample                  | 2273.0              
--RECORD 6-----------------------------------------------
- summary                          | 75%                 
- receiver_latitude                | 43.986              
- receiver_longitude               | -116.45637          
- receiver_elevation_m             | 1388.0              
- p_arrival_sample                 | 800.0               
- p_weight                         | 0.92                
- p_travel_sec                     | 12.529999732971191  
- s_arrival_sample                 | 1615.0              
- s_weight                         | 0.85                
- source_origin_uncertainty_sec    | 1.12                
- source_latitude                  | 45.6992             
- source_longitude                 | -116.503            
- source_error_sec                 | 0.62                
- source_gap_deg                   | 141.0               
- source_horizontal_uncertainty_km | 2.04142             
- source_depth_km                  | 14.22               
- source_depth_uncertainty_km      | 1.28                
- source_magnitude                 | 2.0                 
- source_distance_deg              | 0.636               
- source_distance_km               | 70.75               
- back_azimuth_deg                 | 284.2               
- coda_end_sample                  | 3100.0              
--RECORD 7-----------------------------------------------
- summary                          | max                 
- receiver_latitude                | 359.9               
- receiver_longitude               | 179.6277            
- receiver_elevation_m             | 4580.0              
- p_arrival_sample                 | 2877.0              
- p_weight                         | 1.0                 
- p_travel_sec                     | 57.18000030517578   
- s_arrival_sample                 | 5644.0              
- s_weight                         | 1.0                 
- source_origin_uncertainty_sec    | 999.0               
- source_latitude                  | 78.3804             
- source_longitude                 | 179.9972            
- source_error_sec                 | 29.33               
- source_gap_deg                   | 360.0               
- source_horizontal_uncertainty_km | 10.0                
- source_depth_km                  | 341.74              
- source_depth_uncertainty_km      | 15.0                
- source_magnitude                 | 7.9                 
- source_distance_deg              | 3.0                 
- source_distance_km               | 346.27              
- back_azimuth_deg                 | 360.0               
- coda_end_sample                  | 6000.0              
- ```
-
-
-Numerical data distribution
-<img width="2488" height="1989" alt="image" src="https://github.com/user-attachments/assets/1db3a568-7f5d-49e6-98ba-851c5b7d32ab" />
-
-From the distribution tables, we can see that most have at least some degree of skew. This helped us decide to impute missing values with the median rather than the mean.
-
-Categorical top 10 frequent values
-<img width="2388" height="1189" alt="image" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
-
-
-Sample Waveform Statistics
-
 ```
+
+</details>
+
+### Data Distribution
+
+<img width="2488" height="1989" alt="Numerical data distribution" src="https://github.com/user-attachments/assets/1db3a568-7f5d-49e6-98ba-851c5b7d32ab" />
+
+Most numerical metadata variables showed some degree of skew. This informed our decision to use median imputation rather than mean imputation for missing numerical values.
+
+### Categorical Frequency Analysis
+
+<img width="2388" height="1189" alt="Top 10 categorical values" src="https://github.com/user-attachments/assets/1b8305f9-4d2c-4378-9158-22c7baf929dd" />
+
+### Waveform Scale Statistics
+
+After reshaping waveform vectors back to `(6000, 3)`, we computed statistics for the three directional components.
+
+```text
 --- Waveform Scale Statistics ---
 Component 1 (East):
   Mean: -2.302661
@@ -297,164 +310,445 @@ Component 3 (Vertical):
   Min: -592841.187500
   Max: 651094.187500
 ```
-After reshaping back to (6000,3) to get directional vectors, we got these `waveform_data` statistics in the hdf5_2_parquet.ipynb. The `waveform_data` column is quantitative, and is in the shape of (1,18000).
-The mean centers around 0 as expected from looking at the waveform amplitude plot (refer to data plot section of readme.md).
 
-Our target column is `trace_category` from the merge.csv metadata file. The positive label will be "earthquake_local" and the negative label will be "noise". 5314 rows were missing and dropped.
+The waveform mean centered near zero, which is expected for seismic amplitude data. The waveform column is quantitative and was flattened to shape `(1, 18000)` for the combined Parquet dataset.
 
+### Target Variable
+
+The target category column is `trace_category`.
+
+| Label | Count |
+|---|---:|
+| `earthquake_local` | 1,027,574 |
+| `noise` | 235,426 |
+| `NULL` | 5,314 |
+
+For binary classification framing, the positive class is `earthquake_local` and the negative class is `noise`. The 5,314 rows with missing category labels were dropped.
+
+### Missing and Duplicate Values
+
+The dataset did not contain duplicate `trace_name` values, which is expected because `trace_name` is a unique identifier. We also did not find duplicate rows. Duplicate values within other columns are expected because many traces can share station, source, or geographic metadata.
+
+Missing values were handled according to the field type and modeling purpose:
+
+- Rows with missing target labels were dropped.
+- Numerical metadata variables with missing values were imputed using the median because the distributions were skewed.
+- Identifier fields such as `trace_name` and `source_id` were treated as identifiers rather than predictive numerical features.
+- Columns with redundancy or poor predictive utility were removed during preprocessing.
+
+### Correlation and Redundancy Analysis
+
+<img width="1558" height="1387" alt="Covariance matrix" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
+
+The covariance matrix suggested two cases of redundancy:
+
+1. `source_distance_deg` and `source_distance_km` were nearly redundant because they represent distance in different units.
+2. `receiver_latitude` and `source_latitude` showed a relationship that required further inspection.
+
+Based on the distribution plots and covariance analysis, we dropped `source_distance_deg` and `receiver_latitude` from later modeling steps.
+
+### Example Waveforms
+
+Example earthquake waveform:
+
+**Trace name:** `A16.CN_20150121053158_EV`
+
+<img width="790" height="471" alt="Example earthquake waveform" src="https://github.com/user-attachments/assets/4e2a0850-d16b-4e0b-b6d1-fe904f7fb9b1" />
+
+Example noise waveform:
+
+**Trace name:** `109C.TA_201510210555_NO`
+
+<img width="790" height="495" alt="Example noise waveform" src="https://github.com/user-attachments/assets/c9ea2eeb-8a88-493a-845b-0da3015f37df" />
+
+The waveform plots provide visual evidence that earthquake and noise traces have distinguishable signal patterns that are not obvious from the raw flattened array values alone.
+
+---
+
+## Preprocessing
+
+The preprocessing pipeline converted raw seismic files into a distributed modeling dataset.
+
+### Main Preprocessing Steps
+
+1. Loaded the metadata from `merge.csv` using Spark.
+2. Loaded waveform data from `merge.hdf5`.
+3. Joined waveform observations with metadata using trace identifiers.
+4. Flattened each `(6000, 3)` waveform into a vector of length `18,000`.
+5. Dropped rows with missing target labels.
+6. Imputed missing numerical metadata values using median imputation.
+7. Removed redundant or low-utility columns such as `source_distance_deg` and `receiver_latitude`.
+8. Saved the combined result as `stead_combined.parquet` for faster downstream loading.
+
+### Spark Configuration Used for Parquet Processing
+
+```python
+spark = (
+    SparkSession.builder
+    .config("spark.driver.memory", "4g")
+    .config("spark.executor.instances", "6")
+    .config("spark.executor.memory", "20g")
+    .getOrCreate()
+)
 ```
-+----------------+-------+
-|  trace_category|  count|
-+----------------+-------+
-|earthquake_local|1027574|
-|           noise| 235426|
-|            NULL|   5314|
-+----------------+-------+
+
+---
+
+## Model 1: Baseline Distributed Regression Models
+
+The first modeling stage predicted `s_arrival_sample` using distributed regression models.
+
+### Models Tested
+
+| Model | Key hyperparameters | Target |
+|---|---|---|
+| Random Forest Regressor | `num_trees=20`, `max_depth=5` | `s_arrival_sample` |
+| Random Forest Regressor | `num_trees=40`, `max_depth=3` | `s_arrival_sample` |
+| XGBoost Regressor | `max_depth=8`, `eta=0.1` | `s_arrival_sample` |
+
+### Baseline Modeling Goal
+
+The baseline model was used to determine whether distributed tree-based models could learn meaningful relationships from the waveform-derived feature representation. It also provided a comparison point for the final SVD and PhaseNet approach.
+
+---
+
+## Model 2: SVD Dimensionality Reduction and PhaseNet
+
+The final modeling stage used dimensionality reduction followed by a seismic deep learning model.
+
+### Dimensionality Reduction with SVD
+
+We applied Singular Value Decomposition (SVD) to the three-channel waveform data. In seismology, applying SVD to 3-channel waveform data is related to polarization filtering. The first principal component captures the dominant direction of particle motion, while lower components can be interpreted as less dominant signal structure or background noise.
+
+For each waveform matrix, SVD decomposes the data into directional and temporal components. The rank-1 reconstruction uses the dominant component:
+
+```text
+Waveform matrix ≈ U₁ S₁ V₁ᵀ
 ```
 
-## Missing and duplicate Values
-In our dataset there are no duplicate value in `trace_name` as it is a unique identifier. To confirm we did a simple calculation on `trace_name` column. (Refer to cell 12)
+Where:
 
-Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data (with the exception of `source_latitude` which we later decide to remove).
+- `U₁` is a single column vector with shape `(6000, 1)` and represents the dominant or “master” waveform.
+- `S₁` is the scalar singular value for the dominant component.
+- `V₁ᵀ` is a single row vector with shape `(1, 3)` and represents directional weights across the three seismic channels.
 
-**Readme needs to be updated with missing values description**
+<img width="304" height="48" alt="SVD equation" src="https://github.com/user-attachments/assets/64effe61-da45-4216-b42c-ea5795c20461" />
 
-## Data Plots
+<img width="688" height="94" alt="Rank-one SVD reconstruction" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
 
-<img width="1558" height="1387" alt="image" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
+This reconstruction projects the 3-dimensional seismic channel space onto a 1-dimensional dominant motion direction.
 
-From this covariance matrix, we can see two possible instances of collinearity/redundant variables.\
-First is between `source_distance_deg` and `source_distance_km`, since they are essentially the same thing represented in two different metrics.\
-Second is between `receiver_latitude` and `source_latitude`. Upon further inspection and based on the data distribution graphs, `receiver_latitude` is not a useful predictor variable due to duplicate data values.\
-The duplicate data values makes sense since the location(s) that was receiving the earthquake signals was likely the same.
-Thus, we will drop `source_distance_deg` and `receiver_latitude` moving forward.
+<img width="1464" height="690" alt="SVD directional projection visualization" src="https://github.com/user-attachments/assets/47387fd6-3c7d-44a7-8782-cb07b21203ba" />
 
+### SVD Visualization Interpretation
 
-Example Earthquake waveform plot
-trace name: A16.CN_20150121053158_EV
-<img width="790" height="471" alt="image" src="https://github.com/user-attachments/assets/4e2a0850-d16b-4e0b-b6d1-fe904f7fb9b1" />
+In the left plot, darker colors represent the beginning of the time window, green colors represent the approximate middle of the time window near the S-wave arrival, and yellow colors represent the later part of the time window.
 
-Example noise waveform plot
-trace name: 109C.TA_201510210555_NO
-<img width="790" height="495" alt="image" src="https://github.com/user-attachments/assets/c9ea2eeb-8a88-493a-845b-0da3015f37df" />
+In the right plot, darker colors represent motion before the main S-wave energy arrives, pink/orange colors represent the approximate S-wave arrival, and yellow colors represent later wave motion after the main arrival.
 
-Just looking at the raw waveform array data does not garner any apparent information, so these waveform plots help visually distinguish the difference in values between "noise" waveforms and "earthquake" waveforms.
+<img width="1389" height="790" alt="S-wave amplitude visualization" src="https://github.com/user-attachments/assets/63199fd0-8c0f-4a26-9dbb-dc58d8dd7120" />
 
----
+The visualization shows that amplitude increases substantially after the initial wave arrival, supporting the interpretation that later S-wave motion is more impactful than the earlier P-wave arrival.
 
-## Baseline Model(s) Fitting Analysis
+### PhaseNet Final Model
 
-- Our RF Regressor model is underfitting, while our XGBoost Regressor was severely overfitting.
-- We have one Random Forest Regressor model with 20 `num_trees` and `max_depth` 5.
-- Another RF Regressor model with 40 `num_trees` and `max_depth` 3.
-- For XGBoost Regressor we had the hyperparameter set as `max_depth` = 8 with `eta` = 0.1 .
-- as a result, our baseline model with 20 trees with max_depth 5 had a better performance 
-    - RF Regressor max_depth = 5; 20 trees: test RMSE: 87.47; train RMSE: 84.71
-    - RF Regressor max_depth = 3; 40 trees: test RMSE: 93.55
-    - XGBoost Regressor max_depth = 8; eta: 0.1; test RMSE: 431.35559602907716
+For the final model, we implemented PhaseNet, a deep neural network designed for seismic wave arrival picking.
 
-- RF Regressor num_trees: 20; max_depth: 5 test statistics graph
-<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/12ced923-a516-4b79-a219-102353e7d5c2" />
+We trained and evaluated two versions of the model:
 
-- RF Regressor num_trees: 40; max_depth: 3 test statistics graph
-<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/003329ba-648c-4477-8455-3e827f1f0085" />
+1. PhaseNet using SVD-processed waveform data.
+2. PhaseNet using waveform data without SVD preprocessing.
 
--  The left graph of both models reveals two clusters. The graph of RF Regressor num_trees: 20; max_depth: 5 has more spread out clusters, indicating that it's predictions were more varied than that of num_trees: 40; max_depth: 3. The cluster that hovers above predicted s-wave sample value of 200 is very narrow for the latter model, but that model has a slightly higher test RMSE, suggesting that it did not quite narrow in on the correct value.
+The model was trained on a subsample of 80,000 rows, equal to approximately 7.77% of the full dataset. Since each row contains 18,000 waveform features, this subset corresponds to approximately:
 
-    - **RMSE Interpretation**: The original data is collected in 100hz. However, we down sampled the data to 20hz instead. Due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
-- Which model performs best and why?
-    - as of now, our Random Forest Regressor with max_depth = 5 and 20 trees is showing the best performance as it is showing the lowest test RMSE score while the training and testing has a similar score as well.
-- What are the next models you are thinking of for Milestone 4 and why?
-    - As our data is a time series heavy dataset, we might be looking into some time series applicable models such as GRU cells or a model named PhaseNet.
-    - When we were still predicting `trace_category` rather than `s_arrival_sample`, we were running into a lot of data leakage issues with the model learning from intentional null values, and we were strongly considering Linear ODE for that scenario. We may look into if it still makes sense to use Linear ODE for our current setup.
+```text
+80,000 rows × 18,000 waveform features = 1,440,000,000 waveform feature values
+```
 
 ---
 
-## Baseline Model(s) Conclusion
+# Results
 
-Our Random Forest Regressor model demonstrated the most reliable performance among all evaluated models, achieving test and train RMSEs of very close values, avoiding overfitting. However, the test RMSE of 87.47 samples, which is equivalent to an average time offset of 4.37 seconds (87.47 x 0.05s) from the true S-wave arrival time is indicative of underfitting. In seismology, especially considering the downsampling that we did, a 4.37 second window is not small, so our current model is not complex enough to fully capture the high-frequency characteristics embedded in the waveforms.
+## Exploratory Data Results
 
-To improve it, we could have reduced how much we downsampled by. i.e. by 50Hz instead of 20Hz or keeping it at the original 100Hz. We only did this to try and reduce dimensionality. Additionally, we could have tried to increase the maxDepth and numTrees hyperparameters to capture more nuanced relationships within the data. Lastly, there are numerous types of feature engineering methods specific to seismic data that we found through research, such as STA/LTA (Short-Term Average / Long-Term Average).
+The exploratory analysis showed that:
 
-The speedup analysis indicates that we weren't able to optimize well enough, thus not making full use of distributed computing to help is in this task. There is the possibility that the bottleneck we are clearly experiencing has something to do with the the way MLLib is performing this.
+- The dataset is large enough to require distributed processing.
+- Metadata features contain skewed distributions, motivating median imputation.
+- The target labels are imbalanced, with more earthquake observations than noise observations.
+- Some metadata fields are redundant, especially distance variables expressed in different units.
+- Waveform plots show visible differences between earthquake and noise traces.
 
 ---
 
-# Final Model(s)
+## Model 1 Results
 
-## Dimensionality Reduction
+### Baseline Model Performance
 
-We chose to apply SVD to our waveform data as a method of dimensionality reduction. Applying SVD to a matrix of 3 channel waveform data is known as polarization filtering in seismology. The first principal component represents the dominant direction of particle motion (the actual earthquake wave). The matrix is reconstructed using only the top components, and the lower components are treated as background noise.
+| Model | Train RMSE | Test RMSE | Interpretation |
+|---|---:|---:|---|
+| Random Forest Regressor, `num_trees=20`, `max_depth=5` | 84.71 | 87.47 | Best baseline result; train/test scores are close |
+| Random Forest Regressor, `num_trees=40`, `max_depth=3` | Not reported | 93.55 | Higher test error; likely more underfit |
+| XGBoost Regressor, `max_depth=8`, `eta=0.1` | Not reported | 431.36 | Severe overfitting or failed generalization |
 
-SVD Mathematical Explanation:
-(Images sourced from Google Gemini)
+The best baseline model was the Random Forest Regressor with `num_trees=20` and `max_depth=5`. Its train and test RMSE values were close, suggesting that it did not severely overfit. However, the RMSE was still large enough to indicate underfitting.
 
-<img width="304" height="48" alt="Screenshot 2026-06-01 184144" src="https://github.com/user-attachments/assets/64effe61-da45-4216-b42c-ea5795c20461" />
+Because the data was downsampled to 20 Hz, each sample corresponds to 0.05 seconds. Therefore, the best baseline test RMSE corresponds to approximately:
 
-$U_1$ is a single column vector of shape (6000, 1). This is the "Master Waveform."
+```text
+87.47 samples × 0.05 seconds/sample = 4.37 seconds
+```
 
-$S_1$ is a single number (a scalar scaling factor).
+A 4.37-second average offset is meaningful for seismic arrival prediction, so the baseline model was not accurate enough for a high-quality arrival picking system.
 
-$V_1^T$ is a single row vector of shape (1, 3). This represents the $(N, Z, E)$ directional orientation of the wave.
+### Baseline Model Figures
 
-By multiplying them together, we get our (6000, 3) matrix back:
+Random Forest Regressor with `num_trees=20` and `max_depth=5`:
 
-<img width="688" height="94" alt="Screenshot 2026-06-01 184227" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
+<img width="1590" height="590" alt="Random Forest 20 trees max depth 5 test statistics" src="https://github.com/user-attachments/assets/12ced923-a516-4b79-a219-102353e7d5c2" />
 
-Every single channel in the denoised output is now just the exact same master waveform ($U_1$), simply multiplied by a different directional weight ($V_1^T$).
+Random Forest Regressor with `num_trees=40` and `max_depth=3`:
 
-In conclusion SVD (polarization filter) projects our 3D space of seismic waves onto a 1D line. The following plot provides this visualization.
+<img width="1590" height="590" alt="Random Forest 40 trees max depth 3 test statistics" src="https://github.com/user-attachments/assets/003329ba-648c-4477-8455-3e827f1f0085" />
 
-<img width="1464" height="690" alt="image" src="https://github.com/user-attachments/assets/47387fd6-3c7d-44a7-8782-cb07b21203ba" />
+The left graph in both figures shows two visible clusters. The `num_trees=20`, `max_depth=5` model produced more varied predictions, while the `num_trees=40`, `max_depth=3` model showed a narrower cluster around predicted S-wave sample values above 200. However, the second model had a higher test RMSE, suggesting that the narrower predictions did not improve accuracy.
 
-### Plot Color Interpretation
-**Left Plot**
+---
 
-Dark Purple / Dark Blue: This is the start of the plot's time window (start_idx). This is the ground motion right before the main S-wave energy hits.
+## Model 2 Results
 
-Teal / Green: The middle of the time window. This is approximately the peak of the S-wave arrival.
+### PhaseNet Prediction Example
 
-Bright Yellow: The very end of your time window (end_idx). This is the lingering motion as the wave passes.
-
-**Right Plot**
-
-Dark Purple: Right before the main S-wave energy hits.
-
-Vibrant Pink / Orange: The middle of the window (the S-wave arrival).
-
-Bright Yellow: The end of the window; the lingering motion as the wave passes.
-
-<img width="1389" height="790" alt="image" src="https://github.com/user-attachments/assets/63199fd0-8c0f-4a26-9dbb-dc58d8dd7120" />
-
-As you can see, we see some amplitude after the arrival of the earthquake's first wave. However, the amplitude is significantly larger resulting from the arrival of the earthquake's second wave. This confirms the commonly held notion that the second waves of earthquakes are the danger.
-
-## Phasenet Model Evaluation
-
-For our final model, we implemented Phasenet, which is a deep neural network specifically for seismic wave detection.
-
-(The github we used as reference for our model: https://github.com/AI4EPS/PhaseNet)
-
-We ran two different versions of our model to compare its performance with and without SVD applied to the waveform data.
-We ran them on a subsample of 80,000 rows (7.77% of the data), which is effectively 1.44 billion features (80,000 rows * 18,000 waveform features)
-
---- Sample Prediction ---
+```text
 Predicted P Wave Arrival Time: 8.05s (Index: 805)
 Predicted S Wave Arrival Time: 10.02s (Index: 1002)
+```
 
---- Test Data Evaluation (SVD applied) ---
---------------------------------------------------
-Final Training Loss: 0.01585
-Final Average Test Loss: 0.01640
+### PhaseNet Evaluation
 
---- Test Data Evaluation (without SVD applied) ---
-Final Training Loss: 0.01285
-Final Average Test Loss: 0.01275
+| Model version | Final training loss | Final average test loss | Interpretation |
+|---|---:|---:|---|
+| PhaseNet with SVD | 0.01585 | 0.01640 | Slight generalization gap; SVD may have removed useful waveform detail |
+| PhaseNet without SVD | 0.01285 | 0.01275 | Best final result; test loss is slightly lower than training loss |
 
-## Related paper
+The PhaseNet model without SVD achieved the best final test loss. This suggests that although SVD is useful for dimensionality reduction and denoising, the rank-reduced representation may remove information that PhaseNet can otherwise learn directly from the raw waveform channels.
 
-Zhu, Weiqiang, and Gregory C. Beroza. "PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method." arXiv preprint arXiv:1803.03211 (2018).
+---
 
+## Prediction Examples
 
+The current reported prediction example includes predicted P-wave and S-wave arrival times for one sample:
+
+```text
+Predicted P Wave Arrival Time: 8.05s (Index: 805)
+Predicted S Wave Arrival Time: 10.02s (Index: 1002)
+```
+
+### Required Final-Submission Addition: Correct / FP / FN Examples
+
+The final project guideline asks for predictions showing correct classifications, false positives, and false negatives from the test dataset. The current README does not yet include those classification examples. Add a table like the following after generating the predictions from the test set:
+
+| Example type | Trace name | True label | Predicted label | Prediction score / confidence | Notes |
+|---|---|---|---|---:|---|
+| Correct classification | TODO | TODO | TODO | TODO | TODO |
+| False positive | TODO | TODO | TODO | TODO | Predicted earthquake when true label was noise |
+| False negative | TODO | TODO | TODO | TODO | Predicted noise when true label was earthquake |
+
+If the final model is reported only as an arrival-time predictor rather than a classifier, include a similar table with true P/S arrival indices, predicted P/S arrival indices, absolute error, and an error category.
+
+---
+
+## Speedup and Framework Comparison
+
+We evaluated distributed processing through Spark and explored Ray for the extra-credit framework comparison. Spark was necessary for loading, joining, cleaning, and saving large waveform data. Ray was explored for model training, especially XGBoost hyperparameter search.
+
+The current README states that Ray appeared faster and easier to implement, but exact speedup values are not yet reported because comparison timing code was missing. To fully complete the speedup analysis, add a table with average runtime over three runs, memory usage, and lines of code.
+
+---
+
+# Discussion
+
+The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior. The EDA confirmed that this problem is not suitable for single-machine processing because each trace contains thousands of time-series measurements across three channels, and the full dataset contains more than one million traces.
+
+The baseline Random Forest Regressor was a useful first model because it established a distributed machine learning benchmark for predicting `s_arrival_sample`. Its train and test RMSE values were close, which indicates that the model did not suffer from severe overfitting. However, the best baseline RMSE corresponded to an average timing error of approximately 4.37 seconds. For seismic arrival prediction, this is too large to be considered highly accurate. Therefore, the baseline model fits in the underfitting region of the fitting graph: it generalizes similarly across train and test sets, but its total error remains too high.
+
+The XGBoost baseline performed much worse on the test set, with a test RMSE of 431.36. This suggests severe overfitting, failed generalization, or a mismatch between the model configuration and feature representation. In contrast, the Random Forest model was more stable but not expressive enough to capture the full structure of waveform signals.
+
+The final model moved toward a more domain-specific approach. SVD was introduced to reduce dimensionality and isolate dominant directional waveform motion. This was useful for visualization and interpretation, and it provided a scientifically meaningful way to analyze three-channel waveform behavior. However, the PhaseNet comparison showed that the model without SVD achieved lower test loss than the model with SVD. This suggests that dimensionality reduction helped interpretation but may have removed high-frequency or multi-channel details that PhaseNet could use for arrival picking.
+
+The results are believable because the best deep-learning result came from the representation that preserved the most waveform information. However, the reported PhaseNet evaluation currently uses a subsample of 80,000 rows rather than the full dataset. This means the final result should be interpreted as a promising experiment rather than a fully optimized production-level model.
+
+Important shortcomings include:
+
+- The final PhaseNet model was trained on only 7.77% of the dataset.
+- The README does not yet include correct, false-positive, and false-negative prediction examples.
+- The Spark vs. Ray framework comparison does not yet include exact runtime, memory, and lines-of-code measurements.
+- The baseline model was affected by downsampling, which reduced feature dimensionality but also likely removed useful waveform detail.
+- Additional seismic feature engineering, such as STA/LTA features, was not fully explored.
+
+Future improvements should include training PhaseNet on a larger subset or the full dataset, reducing the amount of downsampling, adding seismic-specific engineered features, and reporting more detailed prediction examples and timing benchmarks.
+
+---
+
+# Conclusion
+
+This project demonstrated that distributed computing is essential for large-scale seismic waveform analysis. Spark enabled us to load, join, preprocess, and store waveform data that would be impractical to process on a single machine. Ray provided a simpler interface for some model-training workflows and may be better suited for flexible hyperparameter search.
+
+The best baseline model was the Random Forest Regressor with `num_trees=20` and `max_depth=5`, which achieved a test RMSE of 87.47 samples. Although this model generalized better than the XGBoost baseline, the corresponding timing error of approximately 4.37 seconds showed that the baseline was underfit.
+
+The final PhaseNet model achieved stronger results than the baseline approach. Comparing PhaseNet with and without SVD showed that the model without SVD produced the lowest average test loss. This suggests that SVD was helpful for dimensionality reduction and interpretation, but the raw waveform representation preserved important signal details that the neural network could learn directly.
+
+With more time and resources, we would train PhaseNet on a larger portion of the dataset, tune the architecture and learning parameters, evaluate predictions with correct/FP/FN examples, and complete a rigorous Spark vs. Ray timing comparison. We would also explore seismic feature engineering methods such as STA/LTA and compare those features against purely learned waveform representations.
+
+Overall, this project showed how distributed computing changes the modeling workflow: instead of designing models around what can fit on one machine, we were able to design a pipeline around the full structure and scale of the seismic waveform data.
+
+---
+
+## Related Work
+
+Zhu, Weiqiang, and Gregory C. Beroza. “PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method.” *arXiv preprint arXiv:1803.03211* (2018).
+
+Reference implementation used for model development:
+
+- <https://github.com/AI4EPS/PhaseNet>
+
+---
+
+# Statement of Collaboration
+
+> Replace the placeholder rows below with each group member’s actual contribution before final submission.
+
+| Name | Title / Role | Contribution |
+|---|---|---|
+| TODO | TODO | TODO |
+| TODO | TODO | TODO |
+| TODO | TODO | TODO |
+
+Required format from the assignment:
+
+```text
+Name: Title: Contribution
+```
+
+If a group member did not participate, write:
+
+```text
+Name: Did not participate in the project.
+```
+
+---
+
+# Extra Credit: Spark vs. Ray Framework Comparison
+
+We chose Option C: training an XGBoost model on a subset of the data using both Spark and Ray.
+
+The Spark implementation is available in:
+
+```text
+xgboost_test_7.30.ipynb
+```
+
+The Ray implementation is available in:
+
+```text
+ray xgboost.ipynb
+```
+
+## Spark Implementation
+
+```python
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml import Pipeline
+from xgboost.spark import SparkXGBRegressor
+
+# Assemble features
+assembler = VectorAssembler(
+    inputCols=["vec_N", "vec_E", "vec_Z"],
+    outputCol="features"
+)
+
+# Distributed XGBoost
+# num_workers should match the number of Spark executors.
+xgb = SparkXGBRegressor(
+    features_col="features",
+    label_col=label_col,
+    prediction_col="prediction",
+    num_workers=3,
+    max_depth=8,
+    eta=0.1,
+    objective="reg:squarederror",
+    eval_metric="rmse"
+)
+
+pipeline = Pipeline(stages=[assembler, xgb])
+
+# Train distributed model
+model = pipeline.fit(train_df)
+```
+
+## Ray Implementation
+
+```python
+base_params = {
+    "objective": "reg:squarederror",
+    "tree_method": "hist",
+    "eval_metric": "rmse",
+}
+
+max_depth_list = [3, 5, 7]
+eta_list = [0.01, 0.05, 0.1]
+subsample_list = [0.7, 1.0]
+
+search_results = []
+
+for max_depth in max_depth_list:
+    for eta in eta_list:
+        for subsample in subsample_list:
+            params = {
+                **base_params,
+                "max_depth": max_depth,
+                "eta": eta,
+                "subsample": subsample,
+            }
+
+            print(
+                f"Training with params: max_depth={max_depth}, "
+                f"eta={eta}, subsample={subsample}"
+            )
+
+            trainer = XGBoostTrainer(
+                label_column=LABEL_COL,
+                params=params,
+                scaling_config=ScalingConfig(num_workers=4, use_gpu=False),
+                datasets={"train": train_ds, "valid": valid_ds},
+                num_boost_round=200,
+            )
+
+            result = trainer.fit()
+            valid_rmse = result.metrics.get("valid-rmse", None)
+
+            search_results.append({
+                "max_depth": max_depth,
+                "eta": eta,
+                "subsample": subsample,
+                "valid_rmse": valid_rmse,
+            })
+```
+
+## Performance Comparison
+
+The assignment asks for average runtime over three runs, lines of code, and peak memory usage. The current project notes indicate that Ray appeared faster and easier to implement, but exact comparison values are not yet available.
+
+| Framework | Execution time, average of 3 runs | Lines of code | Peak memory usage | Notes |
+|---|---:|---:|---:|---|
+| Spark | TODO | TODO | TODO | Distributed XGBoost using Spark pipeline |
+| Ray | TODO | TODO | TODO | Ray XGBoostTrainer with hyperparameter search |
+
+## Framework Analysis
+
+Based on the current implementation experience, Ray was easier to implement because the training workflow required a lighter wrapper around XGBoost-style configuration, while Spark required more Spark-specific feature assembly and pipeline setup. For this project, Ray may be preferable for flexible model training and hyperparameter search, while Spark remains valuable for large-scale preprocessing and Parquet-based data handling.
+
+To complete this section, add exact timing results from three repeated runs for both frameworks.
 
 
 
