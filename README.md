@@ -432,7 +432,7 @@ Where:
 
 <img width="688" height="94" alt="Rank-one SVD reconstruction" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
 
-This reconstruction projects the 3-dimensional seismic channel space onto a 1-dimensional dominant motion direction.
+This reconstruction projects the 3-dimensional seismic channel space onto a 1-dimensional motion direction.
 
 <img width="1464" height="690" alt="SVD directional projection visualization" src="https://github.com/user-attachments/assets/47387fd6-3c7d-44a7-8782-cb07b21203ba" />
 
@@ -531,41 +531,18 @@ The PhaseNet model without SVD achieved the best final test loss. This suggests 
 
 ---
 
-## Prediction Examples
-
-The current reported prediction example includes predicted P-wave and S-wave arrival times for one sample:
+#### Prediction Sample
 
 ```text
 Predicted P Wave Arrival Time: 8.05s (Index: 805)
 Predicted S Wave Arrival Time: 10.02s (Index: 1002)
 ```
 
-### Required Final-Submission Addition: Correct / FP / FN Examples
-
-The final project guideline asks for predictions showing correct classifications, false positives, and false negatives from the test dataset. The current README does not yet include those classification examples. Add a table like the following after generating the predictions from the test set:
-
-| Example type | Trace name | True label | Predicted label | Prediction score / confidence | Notes |
-|---|---|---|---|---:|---|
-| Correct classification | TODO | TODO | TODO | TODO | TODO |
-| False positive | TODO | TODO | TODO | TODO | Predicted earthquake when true label was noise |
-| False negative | TODO | TODO | TODO | TODO | Predicted noise when true label was earthquake |
-
-If the final model is reported only as an arrival-time predictor rather than a classifier, include a similar table with true P/S arrival indices, predicted P/S arrival indices, absolute error, and an error category.
-
----
-
-## Speedup and Framework Comparison
-
-We evaluated distributed processing through Spark and explored Ray for the extra-credit framework comparison. Spark was necessary for loading, joining, cleaning, and saving large waveform data. Ray was explored for model training, especially XGBoost hyperparameter search.
-
-The current README states that Ray appeared faster and easier to implement, but exact speedup values are not yet reported because comparison timing code was missing. To fully complete the speedup analysis, add a table with average runtime over three runs, memory usage, and lines of code.
-
 ---
 
 # Discussion
 
-The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior. The EDA confirmed that this problem is not suitable for single-machine processing because each trace contains thousands of time-series measurements across three channels, and the full dataset contains more than one million traces.
-
+The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior.
 The baseline Random Forest Regressor was a useful first model because it established a distributed machine learning benchmark for predicting `s_arrival_sample`. Its train and test RMSE values were close, which indicates that the model did not suffer from severe overfitting. However, the best baseline RMSE corresponded to an average timing error of approximately 4.37 seconds. For seismic arrival prediction, this is too large to be considered highly accurate. Therefore, the baseline model fits in the underfitting region of the fitting graph: it generalizes similarly across train and test sets, but its total error remains too high.
 
 The XGBoost baseline performed much worse on the test set, with a test RMSE of 431.36. This suggests severe overfitting, failed generalization, or a mismatch between the model configuration and feature representation. In contrast, the Random Forest model was more stable but not expressive enough to capture the full structure of waveform signals.
