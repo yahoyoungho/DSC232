@@ -453,3 +453,114 @@ Final Average Test Loss: 0.01275
 ## Related paper
 
 Zhu, Weiqiang, and Gregory C. Beroza. "PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method." arXiv preprint arXiv:1803.03211 (2018).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Extra Credit
+1. implementation
+We chose option C. The XGBoost implementaion in Ray will be availble in `ray xgboost.ipynb` and Spark implementation will be available in `xgboost_test_7.30.ipynb`.
+
+2.
+Spark implementation
+```python
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml import Pipeline
+from xgboost.spark import SparkXGBRegressor
+
+# ---------------------------
+# Assemble features
+# ---------------------------
+assembler = VectorAssembler(
+    inputCols=["vec_N", "vec_E", "vec_Z"],
+    outputCol="features"
+)
+
+# ---------------------------
+# Distributed XGBoost
+# num_workers MUST match your Spark executors
+# You have 3 executors → num_workers=3
+# ---------------------------
+xgb = SparkXGBRegressor(
+    features_col="features",
+    label_col=label_col,
+    prediction_col="prediction",
+    num_workers=3,
+    max_depth=8,
+    eta=0.1,
+    objective="reg:squarederror",
+    eval_metric="rmse"
+)
+
+pipeline = Pipeline(stages=[assembler, xgb])
+
+# ---------------------------
+# Train distributed model
+# ---------------------------
+model = pipeline.fit(train_df)```
+
+Ray implementation
+
+```python
+# 9. HYPERPARAMETER SEARCH
+base_params = {
+    "objective": "reg:squarederror",
+    "tree_method": "hist",
+    "eval_metric": "rmse",
+}
+
+max_depth_list = [3, 5, 7]
+eta_list = [0.01, 0.05, 0.1]
+subsample_list = [0.7, 1.0]
+
+search_results = []
+
+for max_depth in max_depth_list:
+    for eta in eta_list:
+        for subsample in subsample_list:
+
+            params = {
+                **base_params,
+                "max_depth": max_depth,
+                "eta": eta,
+                "subsample": subsample,
+            }
+
+            print(f"Training with params: max_depth={max_depth}, eta={eta}, subsample={subsample}")
+
+            trainer = XGBoostTrainer(
+                label_column=LABEL_COL,
+                params=params,
+                scaling_config=ScalingConfig(num_workers=4, use_gpu=False),
+                datasets={"train": train_ds, "valid": valid_ds},
+                num_boost_round=200,
+            )
+
+            result = trainer.fit()
+
+            # Ray stores metrics like "valid-rmse"
+            valid_rmse = result.metrics.get("valid-rmse", None)
+
+            search_results.append({
+                "max_depth": max_depth,
+                "eta": eta,
+                "subsample": subsample,
+                "valid_rmse": valid_rmse,
+            })
+```
+3.
+- We argue that Ray was faster than Spark. We are not sure by how much due to missing comparision code.
+- To us, ray was easier to implement since most of code just needed a simple wrapper compared spark where it needs its own spark code.
+- For our specific use case, we will choose Ray due to easy implementation but with some configuration to suppress unnecessary print outs. 
