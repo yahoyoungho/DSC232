@@ -716,32 +716,13 @@ for max_depth in max_depth_list:
             })
 ```
 
-## Performance Comparison
+## Performance Analysis
 
-The assignment asks for average runtime over three runs, lines of code, and peak memory usage. The current project notes indicate that Ray appeared faster and easier to implement, but exact comparison values are not yet available.
-
-| Framework | Execution time, average of 3 runs | Lines of code | Peak memory usage | Notes |
-|---|---:|---:|---:|---|
-| Spark | TODO | TODO | TODO | Distributed XGBoost using Spark pipeline |
-| Ray | TODO | TODO | TODO | Ray XGBoostTrainer with hyperparameter search |
+For our Ray models, 80,000 rows took 8 hrs to run, 50,000 rows took 4 and a half hrs, and 1,000 rows took approximately 6 minutes. This suggests a near linear correlation between runtime and data size.
 
 ## Framework Analysis
 
-Based on the current implementation experience, Ray was easier to implement because the training workflow required a lighter wrapper around XGBoost-style configuration, while Spark required more Spark-specific feature assembly and pipeline setup. For this project, Ray may be preferable for flexible model training and hyperparameter search, while Spark remains valuable for large-scale preprocessing and Parquet-based data handling.
-
-To complete this section, add exact timing results from three repeated runs for both frameworks.
-
-
-
-
-
-
-
-
-
-
-
-
+Based on the current implementation experience, Ray was easier to implement because the training workflow required a lighter wrapper around XGBoost-style configuration, while Spark required more Spark-specific feature assembly and pipeline setup. For this project, Ray may be preferable for flexible model training while Spark remains valuable for large-scale preprocessing and Parquet-based data handling.
 
 
 ## Extra Credit
@@ -838,4 +819,4 @@ for max_depth in max_depth_list:
 3.
 - We argue that Ray was faster than Spark. We are not sure by how much due to missing comparision code.
 - To us, ray was easier to implement since most of code just needed a simple wrapper compared spark where it needs its own spark code.
-- For our specific use case, we will choose Ray due to easy implementation but with some configuration to suppress unnecessary print outs. 
+- For our specific use case, we will choose Ray due to easy implementation but with some configuration to suppress unnecessary print outs.
