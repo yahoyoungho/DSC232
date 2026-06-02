@@ -316,39 +316,9 @@ Component 3 (Vertical):
 
 The waveform mean centered near zero, which is expected for seismic amplitude data. The waveform column is quantitative and was flattened to shape `(1, 18000)` for the combined Parquet dataset.
 
-### Target Variable
-
-The target category column is `trace_category`.
-
-| Label | Count |
-|---|---:|
-| `earthquake_local` | 1,027,574 |
-| `noise` | 235,426 |
-| `NULL` | 5,314 |
-
-For binary classification framing, the positive class is `earthquake_local` and the negative class is `noise`. The 5,314 rows with missing category labels were dropped.
-
-### Missing and Duplicate Values
-
-The dataset did not contain duplicate `trace_name` values, which is expected because `trace_name` is a unique identifier. We also did not find duplicate rows. Duplicate values within other columns are expected because many traces can share station, source, or geographic metadata.
-
-Missing values were handled according to the field type and modeling purpose:
-
-- Rows with missing target labels were dropped.
-- Numerical metadata variables with missing values were imputed using the median because the distributions were skewed.
-- Identifier fields such as `trace_name` and `source_id` were treated as identifiers rather than predictive numerical features.
-- Columns with redundancy or poor predictive utility were removed during preprocessing.
-
-### Correlation and Redundancy Analysis
+### Correlation Matrix
 
 <img width="1558" height="1387" alt="Covariance matrix" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
-
-The covariance matrix suggested two cases of redundancy:
-
-1. `source_distance_deg` and `source_distance_km` were nearly redundant because they represent distance in different units.
-2. `receiver_latitude` and `source_latitude` showed a relationship that required further inspection.
-
-Based on the distribution plots and covariance analysis, we dropped `source_distance_deg` and `receiver_latitude` from later modeling steps.
 
 ### Example Waveforms
 
@@ -569,6 +539,17 @@ S-Wave Picks Evaluated : 16350
 
 # Discussion
 
+We realized including metadata as predictors was an issue of collinearity and data leakage because the metadata is derivative of the waveform data. Therefore, we ultimately used only waveform data to predict `s_arrival_sample`. The following preprocessing was done using Spark, but was later removed:
+
+### Spark Preprocessing that was not used in the final model
+- Inclusion of `trace_category` == "Noise" resulted in missing data. Numerical metadata variables with missing values were imputed using the median because the distributions were skewed.
+
+- The covariance matrix suggested two cases of redundancy:
+
+1. `source_distance_deg` and `source_distance_km` were nearly redundant because they represent distance in different units.
+2. `receiver_latitude` and `source_latitude` showed a relationship that required further inspection.
+---
+Our initial objective was to predict `trace_category`, which required the above preprocessing. However, as our objective changed to predicting `s_arrival_sample`, we could exclude "noise" `trace_category` and no longer needed to preprocess the metadata.
 The project began with the assumption that large-scale waveform data could support useful prediction of seismic wave arrival behavior.
 The baseline Random Forest Regressor was a useful first model because it established a distributed machine learning benchmark for predicting `s_arrival_sample`. Its train and test RMSE values were close, which indicates that the model did not suffer from severe overfitting. However, the best baseline RMSE corresponded to an average timing error of approximately 4.37 seconds. For seismic arrival prediction, this is too large to be considered highly accurate. Therefore, the baseline model fits in the underfitting region of the fitting graph: it generalizes similarly across train and test sets, but its total error remains too high.
 
