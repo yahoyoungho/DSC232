@@ -1,12 +1,9 @@
 # DSC232
+Link to original dataset: https://github.com/smousavi05/STEAD
 
 # Important TODO for file loading
 - from terminal execute `ls /scratch/$(whoami)` and get the session job name
 - copy data from network directory to scratch directory by executing `cp ~/ysuh2/data/stead_combined.parquet /expanse/lustre/scratch/$(whoami)/{jobname}` or `cp ~/ysuh2/data/stead_combined.parquet /scratch/$(whoami)/{jobname}`
-
-
-## GitHub Repository Setup (2 points)
-Link to dataset: https://github.com/smousavi05/STEAD
 
 <i>We have a parquet file generated form the given csv and hdf5 file. The generated data will be in `ysuh2/data/stead_combined.parquet`</i>
 
@@ -17,7 +14,7 @@ Link to dataset: https://github.com/smousavi05/STEAD
 - Total Memory: 128 GB
 - Driver Memory: 4 GB
 
-### Executor Calculation
+### Executor Calculation for hdf5 data
 - Executor Instances = 8 − 1 = 7
 - Executor Memory = (128 − 4) // 7 = 17 GB
 
@@ -61,7 +58,7 @@ For the executor memory, we noticed that the execution for 6 executors with 20Gb
 - For the metadata EDA, we only allocated 1gb to Driver and 500mb to the single executor for the approximately 0.5GB metadata file.
 
 
-## How many observations does your dataset have?
+## How many observations does the dataset have?
 We have three datasets in total: (merge.csv, merge.hdf5, stead_combined.parquet)\
 The merge.csv metadata file contains total 1,268,314 observations, each representing a unique earthquake event.\
 The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tuple containing three elements.
@@ -74,7 +71,7 @@ The merge.hdf5 file correspondingly contains 1,268,314 rows of tuples, each tupl
 We combined the merge.csv and merge.hdf5 files to create the stead_combined.parquet dataset.
 - It contains 1,265,657 observations and retains the same schema as the original files **except** the waveform data has been flattened.
 
-## Describe all columns in your dataset: their scales and data distributions. Describe categorical and continuous variables. Describe your target column.
+## EDA
 
 Scale of numerical variables from metadata file (merge.csv dataset)
 
@@ -311,14 +308,14 @@ Our target column is `trace_category` from the merge.csv metadata file. The posi
 +----------------+-------+
 ```
 
-## Do you have missing and duplicate values in your dataset?
+## Missing and duplicate Values
 In our dataset there are no duplicate value in `trace_name` as it is a unique identifier. To confirm we did a simple calculation on `trace_name` column. (Refer to cell 12)
 
 Our dataset does not contain duplicate rows. In regards to duplicates values within the columns themselves,  source_id and trace_name are the only ones that should not have any since they are unique identifier fields. Any duplicate values that appear in the other variables are either expected or meaningful to the data (with the exception of `source_latitude` which we later decide to remove).
 
-#### for missing values and duplicates update the notebook and edit the readme
+**Readme needs to be updated with missing values description**
 
-## Data Plots (4 points)
+## Data Plots
 
 <img width="1558" height="1387" alt="image" src="https://github.com/user-attachments/assets/79994546-0ded-4a92-9c05-b606fcef796e" />
 
@@ -339,36 +336,85 @@ trace name: 109C.TA_201510210555_NO
 
 Just looking at the raw waveform array data does not garner any apparent information, so these waveform plots help visually distinguish the difference in values between "noise" waveforms and "earthquake" waveforms.
 
-## Preprocessing Plan (3 points)
+---
 
-How will you handle missing values?
-- Samples in metadata that have missing values in either `trace_name` or `source_id` will be dropped as those are unique identifiers. 
+## Baseline Model(s) Fitting Analysis
 
-- For quantitative variables from the metadata, we will be imputing them with medians as a lot their distributions are skewed.
+- Our RF Regressor model is underfitting, while our XGBoost Regressor was severely overfitting.
+- We have one Random Forest Regressor model with 20 `num_trees` and `max_depth` 5.
+- Another RF Regressor model with 40 `num_trees` and `max_depth` 3.
+- For XGBoost Regressor we had the hyperparameter set as `max_depth` = 8 with `eta` = 0.1 .
+- as a result, our baseline model with 20 trees with max_depth 5 had a better performance 
+    - RF Regressor max_depth = 5; 20 trees: test RMSE: 87.47; train RMSE: 84.71
+    - RF Regressor max_depth = 3; 40 trees: test RMSE: 93.55
+    - XGBoost Regressor max_depth = 8; eta: 0.1; test RMSE: 431.35559602907716
 
-- For qualitative variables from the metadata, we will be trying out different types of imputers to see the best performing imputer (ex: KNNImputer, Mode imputing, IterativeImputer, etc.)
+- RF Regressor num_trees: 20; max_depth: 5 test statistics graph
+<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/12ced923-a516-4b79-a219-102353e7d5c2" />
 
-How will you handle data imbalance (if applicable)?
-- We will using undersampling on the positive label data to make the ratio between `earthquake_local` and `noise` to be similar.
+- RF Regressor num_trees: 40; max_depth: 3 test statistics graph
+<img width="1590" height="590" alt="image" src="https://github.com/user-attachments/assets/003329ba-648c-4477-8455-3e827f1f0085" />
 
-What transformations will you apply (scaling, encoding, feature engineering)?
-- We will apply the MinMaxScaler to hdf5 file containing waveform data. As the data is a frequency data we will be exploring differnt types of filters to filter out the noise.
+-  The left graph of both models reveals two clusters. The graph of RF Regressor num_trees: 20; max_depth: 5 has more spread out clusters, indicating that it's predictions were more varied than that of num_trees: 40; max_depth: 3. The cluster that hovers above predicted s-wave sample value of 200 is very narrow for the latter model, but that model has a slightly higher test RMSE, suggesting that it did not quite narrow in on the correct value.
 
-- In terms of cateogorical variables we are going to apply one-hot-encoding so that we can feed in the numerical representation.
+    - **RMSE Interpretation**: The original data is collected in 100hz. However, we down sampled the data to 20hz instead. Due to do this, our evaluation for RF Regressor max_depth = 5; 20 trees will be having a offset of 87.47 * 0.05 = around 4.37 seconds from the actual `s_arrival time`.
+- Which model performs best and why?
+    - as of now, our Random Forest Regressor with max_depth = 5 and 20 trees is showing the best performance as it is showing the lowest test RMSE score while the training and testing has a similar score as well.
+- What are the next models you are thinking of for Milestone 4 and why?
+    - As our data is a time series heavy dataset, we might be looking into some time series applicable models such as GRU cells or a model named PhaseNet.
+    - When we were still predicting `trace_category` rather than `s_arrival_sample`, we were running into a lot of data leakage issues with the model learning from intentional null values, and we were strongly considering Linear ODE for that scenario. We may look into if it still makes sense to use Linear ODE for our current setup.
 
-- We can feature engineering the displacement, velocity, accleration columns derived from the waveform data.
+---
 
-What Spark operations will you use for preprocessing?
-We will consider utilizing the following functions from pyspark.ml.feature:
+## Baseline Model(s) Conclusion
 
-- pyspark.ml.feature.Imputer: Used for imputing missing values in the metadata dataset's quantitative fields using the mean or median of the column.
+Our Random Forest Regressor model demonstrated the most reliable performance among all evaluated models, achieving test and train RMSEs of very close values, avoiding overfitting. However, the test RMSE of 87.47 samples, which is equivalent to an average time offset of 4.37 seconds (87.47 x 0.05s) from the true S-wave arrival time is indicative of underfitting. In seismology, especially considering the downsampling that we did, a 4.37 second window is not small, so our current model is not complex enough to fully capture the high-frequency characteristics embedded in the waveforms.
 
-- pyspark.ml.feature.StringIndexer: Used to encode categorical string labels into a column of label indices.
+To improve it, we could have reduced how much we downsampled by. i.e. by 50Hz instead of 20Hz or keeping it at the original 100Hz. We only did this to try and reduce dimensionality. Additionally, we could have tried to increase the maxDepth and numTrees hyperparameters to capture more nuanced relationships within the data. Lastly, there are numerous types of feature engineering methods specific to seismic data that we found through research, such as STA/LTA (Short-Term Average / Long-Term Average).
 
-- pyspark.ml.feature.OneHotEncoder: Used to map a column of category indices to a column of binary vectors for categorical metadata.
+The speedup analysis indicates that we weren't able to optimize well enough, thus not making full use of distributed computing to help is in this task. There is the possibility that the bottleneck we are clearly experiencing has something to do with the the way MLLib is performing this.
 
-- pyspark.ml.feature.VectorAssembler: A transformer that combines a given list of columns (numerical, categorical vectors, and waveform data) into a single feature vector.
+---
 
-- pyspark.ml.feature.StandardScaler: Used to standardize the feature vectors by subtracting the mean and scaling to unit variance.
+# Final Model(s)
 
-- pyspark.ml.feature.PCA: Used to project the high-dimensional feature vectors into a lower-dimensional space, reducing noise and capturing the most significant variance in the data.
+## Dimensionality Reduction
+
+We chose to apply SVD to our waveform data as a method of dimensionality reduction. Applying SVD to a matrix of 3 channel waveform data is known as polarization filtering in seismology. The first principal component represents the dominant direction of particle motion (the actual earthquake wave). The matrix is reconstructed using only the top components, and the lower components are treated as background noise.
+
+SVD Mathematical Explanation:
+(Images sourced from Google Gemini)
+
+<img width="304" height="48" alt="Screenshot 2026-06-01 184144" src="https://github.com/user-attachments/assets/64effe61-da45-4216-b42c-ea5795c20461" />
+
+$U_1$ is a single column vector of shape (6000, 1). This is the "Master Waveform."
+$S_1$ is a single number (a scalar scaling factor).
+$V_1^T$ is a single row vector of shape (1, 3). This represents the $(N, Z, E)$ directional orientation of the wave.
+By multiplying them together, we get our (6000, 3) matrix back:
+
+<img width="688" height="94" alt="Screenshot 2026-06-01 184227" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
+
+Every single channel in the denoised output is now just the exact same master waveform ($U_1$), simply multiplied by a different directional weight ($V_1^T$).
+
+In conclusion SVD (polarization filter) projects our 3D space of seismic waves onto a 1D line. The following plot provides this visualization.
+
+<img width="1464" height="690" alt="image" src="https://github.com/user-attachments/assets/47387fd6-3c7d-44a7-8782-cb07b21203ba" />
+
+### Plot Color Interpretation
+**Left Plot**
+Dark Purple / Dark Blue: This is the start of the plot's time window (start_idx). This is the ground motion right before the main S-wave energy hits.
+
+Teal / Green: The middle of the time window. This is approximately the peak of the S-wave arrival.
+
+Bright Yellow: The very end of your time window (end_idx). This is the lingering motion as the wave passes.
+
+**Right Plot**
+Dark Purple: Right before the main S-wave energy hits.
+
+Vibrant Pink / Orange: The middle of the window (the S-wave arrival).
+
+Bright Yellow: The end of the window; the lingering motion as the wave passes.
+
+<img width="1389" height="790" alt="image" src="https://github.com/user-attachments/assets/63199fd0-8c0f-4a26-9dbb-dc58d8dd7120" />
+
+As you can see, we see some amplitude after the arrival of the earthquake's first wave. However, the amplitude is significantly larger resulting from the arrival of the earthquake's second wave. This confirms the commonly held notion that the second waves of earthquakes are the danger.
