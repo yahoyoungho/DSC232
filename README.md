@@ -388,8 +388,11 @@ SVD Mathematical Explanation:
 <img width="304" height="48" alt="Screenshot 2026-06-01 184144" src="https://github.com/user-attachments/assets/64effe61-da45-4216-b42c-ea5795c20461" />
 
 $U_1$ is a single column vector of shape (6000, 1). This is the "Master Waveform."
+
 $S_1$ is a single number (a scalar scaling factor).
+
 $V_1^T$ is a single row vector of shape (1, 3). This represents the $(N, Z, E)$ directional orientation of the wave.
+
 By multiplying them together, we get our (6000, 3) matrix back:
 
 <img width="688" height="94" alt="Screenshot 2026-06-01 184227" src="https://github.com/user-attachments/assets/12b16e95-4052-4fdf-b913-493384758eea" />
@@ -402,6 +405,7 @@ In conclusion SVD (polarization filter) projects our 3D space of seismic waves o
 
 ### Plot Color Interpretation
 **Left Plot**
+
 Dark Purple / Dark Blue: This is the start of the plot's time window (start_idx). This is the ground motion right before the main S-wave energy hits.
 
 Teal / Green: The middle of the time window. This is approximately the peak of the S-wave arrival.
@@ -409,6 +413,7 @@ Teal / Green: The middle of the time window. This is approximately the peak of t
 Bright Yellow: The very end of your time window (end_idx). This is the lingering motion as the wave passes.
 
 **Right Plot**
+
 Dark Purple: Right before the main S-wave energy hits.
 
 Vibrant Pink / Orange: The middle of the window (the S-wave arrival).
@@ -418,3 +423,29 @@ Bright Yellow: The end of the window; the lingering motion as the wave passes.
 <img width="1389" height="790" alt="image" src="https://github.com/user-attachments/assets/63199fd0-8c0f-4a26-9dbb-dc58d8dd7120" />
 
 As you can see, we see some amplitude after the arrival of the earthquake's first wave. However, the amplitude is significantly larger resulting from the arrival of the earthquake's second wave. This confirms the commonly held notion that the second waves of earthquakes are the danger.
+
+## Phasenet Model Evaluation
+
+For our final model, we implemented Phasenet, which is a deep neural network specifically for seismic wave detection.
+
+(The github we used as reference for our model: https://github.com/AI4EPS/PhaseNet)
+
+We ran two different versions of our model to compare its performance with and without SVD applied to the waveform data.
+We ran them on a subsample of 80,000 rows (7.77% of the data), which is effectively 1.44 billion features (80,000 rows * 18,000 waveform features)
+
+--- Sample Prediction ---
+Predicted P Wave Arrival Time: 8.05s (Index: 805)
+Predicted S Wave Arrival Time: 10.02s (Index: 1002)
+
+--- Test Data Evaluation (SVD applied) ---
+--------------------------------------------------
+Final Training Loss: 0.01585
+Final Average Test Loss: 0.01640
+
+--- Test Data Evaluation (without SVD applied) ---
+Final Training Loss: 0.01285
+Final Average Test Loss: 0.01275
+
+## Related paper
+
+Zhu, Weiqiang, and Gregory C. Beroza. "PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method." arXiv preprint arXiv:1803.03211 (2018).
